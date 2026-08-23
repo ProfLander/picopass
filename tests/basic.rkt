@@ -44,6 +44,18 @@
             (syntax->datum)
             (pretty-format)))
 
+; test pass for value -> value
+
+[define-pass procedure-pass
+ (-> string? number?)
+
+ [string
+  (-> string? number?)
+
+  [str (string->number str)]]]
+
+(printf "procedure-pass: ~a\n" (procedure-pass "1234"))
+
 ;; from-structs: arbitrary record IR to L0 syntax
 
 (struct ir-ident [ident])
@@ -98,37 +110,21 @@
 [define-pass unary-lambda
  (-> L0 L1)
 
- [expr
+ [expr-abs
   (-> expr expr)
 
   [(abs ((~rec arg:ident) ...) (~rec body:expr))
    (for/fold ([acc (attribute body)])
              ([arg (in-list (reverse (attribute arg)))])
-     #`(abs #,arg #,acc))]
+     #`(abs #,arg #,acc))]]
+
+ [expr-app
+  (-> expr expr)
 
   [(app (~rec arg:expr) ...+)
    (for/fold ([acc (car (attribute arg))])
              ([arg (in-list (cdr (attribute arg)))])
      #`(app #,acc #,arg))]]]
-
-#; [define-pass unary-lambda
-    (-> L0 L1)
-
-    [expr-abs
-     (-> expr expr)
-
-     [(abs ((~rec arg:ident) ...) (~rec body:expr))
-      (for/fold ([acc (attribute body)])
-                ([arg (in-list (reverse (attribute arg)))])
-        #`(abs #,arg #,acc))]]
-
-    [expr-app
-     (-> expr expr)
-
-     [(app (~rec arg:expr) ...+)
-      (for/fold ([acc (car (attribute arg))])
-                ([arg (in-list (cdr (attribute arg)))])
-        #`(app #,acc #,arg))]]]
 
 (printf "L0 to L1: ~a\n"
         (~> #'(begin (app (abs (x y) x) 1234 5678))
