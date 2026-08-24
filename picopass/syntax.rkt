@@ -10,6 +10,7 @@
 
 (define (datum=? a b)
   (-> syntax? syntax? boolean?)
+  #:trace #f
   "datum equality over syntax objects"
 
   (equal? (syntax->datum a)

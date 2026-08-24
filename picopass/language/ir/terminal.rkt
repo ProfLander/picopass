@@ -18,18 +18,21 @@
 
 (define (terminal-name self)
   (-> terminal? symbol?)
+  #:trace #f
   "return the symbolic name of SELF"
 
   (syntax-e (terminal-ident/name self)))
 
 (define (terminal-class self)
   (-> terminal? symbol?)
+  #:trace #f
   "return the symbolic class of SELF"
 
   (syntax-e (terminal-ident/class self)))
 
 (define (terminal=? a b)
   (-> terminal? terminal? boolean?)
+  #:trace #f
   "equality predicate over terminals"
 
   (and (equal? (terminal-name a)

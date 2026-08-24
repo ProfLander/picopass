@@ -40,24 +40,28 @@
 
 (define (non-terminal-name self)
   (-> non-terminal? symbol?)
+  #:trace #f
   "return the symbolic name of SELF"
 
   (syntax-e (non-terminal-ident self)))
 
 (define (non-terminal-literal-names self)
   (-> non-terminal? (listof symbol?))
+  #:trace #f
   "return the symbolic names of the literals in SELF"
 
   (map syntax-e (non-terminal-literals self)))
 
 (define (non-terminal-datum-literal-names self)
   (-> non-terminal? (listof symbol?))
+  #:trace #f
   "return the symbolic names of the datum-literals in SELF"
 
   (map syntax-e (non-terminal-datum-literals self)))
 
 (define (non-terminal=? a b)
   (-> non-terminal? non-terminal? boolean?)
+  #:trace #f
   "equality over non-terminals"
 
   (and (datum=? (non-terminal-ident a)

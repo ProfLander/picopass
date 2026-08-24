@@ -37,12 +37,14 @@
 
 (define (pass-name self)
   (-> pass? symbol?)
+  #:trace #f
   "return the symbolic name of SELF"
 
   (syntax-e (pass-ident self)))
 
 (define (pass-context self)
   (-> pass? syntax?)
+  #:trace #f
   "return the syntactic context of SELF"
 
   (pass-ident self))
