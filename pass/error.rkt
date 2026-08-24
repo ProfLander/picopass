@@ -36,12 +36,13 @@
             pass-name
             pred-name)))
 
-(define (raise-pass-output-predicate-error pass-name pred-name)
-  (-> symbol? symbol? none/c)
+(define (raise-pass-output-predicate-error pass-name pred-name value)
+  (-> symbol? symbol? any/c none/c)
   (error
-    (format "~a: output predicate ~a returned false"
+    (format "~a: output predicate ~a returned false\n  value: ~a"
             pass-name
-            pred-name)))
+            pred-name
+            value)))
 
 (define (raise-pass-dispatch-error pass-name in)
   (-> symbol? any/c none/c)
@@ -71,19 +72,19 @@
 
 (define (raise-processor-output-predicate-error pass-name
                                                 pred-name
-                                                processor-name
-                                                pattern)
-  (-> symbol? symbol? symbol? string? none/c)
+                                                pattern
+                                                value)
+  (-> symbol? symbol? string? any/c none/c)
   (error
     (format (string-join
               (list "~a: output predicate ~a returned false"
-                    "  processor: ~a"
-                    "  clause: ~a")
+                    "  clause: ~a"
+                    "  value: ~a")
               "\n")
             pass-name
             pred-name
-            processor-name
-            pattern)))
+            pattern
+            value)))
 
 ; Processor Clause
 
