@@ -5,7 +5,6 @@
 ; Holds additions / removals for literals, datum-literals, and productions
 
 (require racket/function
-         racket/pretty
 
          picopass/delta
          picopass/syntax

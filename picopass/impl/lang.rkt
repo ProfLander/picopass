@@ -25,6 +25,7 @@
 
 (provide (all-from-out racket/base)
          (all-from-out racket/contract)
+         (all-from-out racket/pretty)
          (all-defined-out))
 
 ; Choose define or define/contract based on the value of `use-contracts`
