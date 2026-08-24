@@ -43,15 +43,20 @@
                     (format-id (language-context language) "parse-~a" #'ident)])
 
       #`(begin
+
           (define-syntax ident
             #,language)
+
           terminal
           ...
+
           non-terminal
           ...
+
           (define parse-language
             (syntax-parser
-              [(~var _ entry-point) this-syntax]))))]])
+              [(~var _ entry-point) 
+               this-syntax]))))]])
 
 (define (compile-terminal language terminal)
   (-> language? terminal? syntax?)
@@ -79,12 +84,20 @@
 
   (let* ([language-name (language-name language)]
          [name (non-terminal-name non-terminal)]
-         [literals (non-terminal-literals non-terminal)]
-         [datum-literals (non-terminal-datum-literals non-terminal)]
+
+         [literals
+          (for/list ([literal (in-list (non-terminal-literals 
+                                         non-terminal))])
+            (language-introduce-datum language literal))]
+
+         [datum-literals
+          (for/list ([datum-literal (in-list (non-terminal-datum-literals 
+                                               non-terminal))])
+            (language-introduce-datum language datum-literal))]
 
          [productions
-          (for/list ([production (in-list
-                                   (non-terminal-productions non-terminal))])
+          (for/list ([production (in-list (non-terminal-productions 
+                                            non-terminal))])
             (compile-production language non-terminal production))])
 
     [with-language-syntax language ([define-syntax-class 'define-syntax-class]
