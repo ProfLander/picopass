@@ -21,6 +21,7 @@
 
 (define (p-ident-name self)
   (-> p-ident? symbol?)
+  #:trace #f
   "return the symbolic name of SELF"
 
   (syntax-e (p-ident-ident self)))
@@ -38,6 +39,7 @@
 
 (define (p-literal-name self)
   (-> p-literal? symbol?)
+  #:trace #f
   "return the symbolic name of SELF"
 
   (syntax-e (p-literal-ident self)))
@@ -68,6 +70,7 @@
 
 (define (pattern? self)
   (-> any/c boolean?)
+  #:trace #f
   "predicate identifying the implicit union type of patterns"
 
   (or (p-ident? self)
@@ -77,6 +80,7 @@
 
 (define (pattern=? a b)
   (-> pattern? pattern? boolean?)
+  #:trace #f
   "equality over patterns"
 
   (cond
@@ -109,6 +113,7 @@
 
 (define (pattern-stx self)
   (-> pattern? syntax?)
+  #:trace #f
   "return the underlying syntax of SELF"
 
   (cond
