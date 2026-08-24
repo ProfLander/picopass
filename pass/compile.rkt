@@ -209,9 +209,11 @@
                                        (language-non-terminals pass-input)
                                        processors))])
 
-         (let* ([pair (hash-ref clause-pairs (if syntax-input
-                                                 (non-terminal-name target)
-                                                 (syntax-e (processor-input target))))]
+         (let* ([pair (hash-ref clause-pairs
+                                (if syntax-input
+                                    (non-terminal-name target)
+                                    (syntax-e (processor-input target)))
+                                null)]
                 [clauses (map car pair)]
                 [output-classes (map cdr pair)])
 
