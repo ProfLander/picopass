@@ -9,4 +9,4 @@
 (define blurb '("Write compilers composed of several simple passes that operate over well-defined intermediate languages."))
 (define categories '(utility))
 (define compile-omit-paths '("tests"))
-
+(define scribblings '(("scribblings/picopass.scrbl")))
