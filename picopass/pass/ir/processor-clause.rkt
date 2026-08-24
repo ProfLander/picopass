@@ -29,6 +29,7 @@
 
 (define (processor-clause-literal? stx)
   (-> syntax? boolean?)
+  #:trace #f
   "pattern literal recognition predicate"
 
   (or (datum=? #'~rec stx)
@@ -36,6 +37,7 @@
 
 (define (processor-clause-pattern->non-terminal-pattern pat)
   (-> pattern? pattern?)
+  #:trace #f
   "convert the processor clause pattern PAT to a language non-terminal pattern"
 
   (match pat

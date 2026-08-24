@@ -6,23 +6,7 @@
 ; non-terminal productions, an entrypoint, and a private definition scope
 
 (require (for-syntax racket/base
-                     syntax/parse)
-
-         racket/list
-         racket/function
-         racket/pretty
-
-         syntax/parse
-
-         threading
-
-         picopass/syntax
-         picopass/logger
-
-         picopass/pattern/ir
-
-         picopass/language/ir/terminal
-         picopass/language/ir/non-terminal)
+                     syntax/parse))
 
 (provide (all-defined-out)
          (struct-out language))
@@ -48,30 +32,35 @@
 
 (define (language-name self)
   (-> language? symbol?)
+  #:trace #f
   "return the symbolic name of SELF"
 
   (syntax-e (language-ident self)))
 
 (define (language-context self)
   (-> language? syntax?)
+  #:trace #f
   "return the syntactic context of SELF"
 
   (language-ident self))
 
 (define (datum->language-syntax self datum)
   (-> language? any/c syntax?)
+  #:trace #f
   "convert DATUM to syntax in the context of SELF"
 
   (datum->syntax (language-context self) datum))
 
 (define (language-introduce self stx)
   (-> language? syntax? syntax?)
+  #:trace #f
   "add the private scope of SELF to the context of STX"
 
   ((language-scope self) stx))
 
 (define (language-introduce-datum self datum)
   (-> language? any/c syntax?)
+  #:trace #f
   "convert DATUM to syntax in the context of SELF,
    and add the private scope of SELF to it"
 

@@ -5,7 +5,6 @@
 ; Asserts invariants over a language to produce useful syntax errors
 
 (require racket/list
-         racket/function
 
          threading
 
@@ -22,172 +21,173 @@
 
 ; Language
 
-(define (validate-language self)
+(define (validate-language language)
   (-> language? (or/c language? none/c))
   "ensure SELF is a valid language"
 
-  (~> self
+  (~> language
       (validate-language/entry-point)
       (validate-language/unique-idents)
       (validate-language/valid-terminals)
       (validate-language/valid-non-terminals)))
 
-(define (validate-language/entry-point self)
+(define (validate-language/entry-point language)
   (-> language? (or/c language? none/c))
   "ensure the entry-point of SELF points to a valid non-terminal"
 
-  (let* ([entry-point (language-entry-point-ident self)]
+  (let* ([entry-point (language-entry-point-ident language)]
          [non-terminal-idents (map non-terminal-ident
-                                   (language-non-terminals self))])
+                                   (language-non-terminals language))])
     (unless (member entry-point non-terminal-idents datum=?)
-      (raise-language-entry-point-error self entry-point)))
+      (raise-language-entry-point-error language entry-point)))
 
-  self)
+  language)
 
-(define (validate-language/unique-idents self)
+(define (validate-language/unique-idents language)
   (-> language? (or/c language? none/c))
   "ensure terminal and non-terminal identifiers in SELF are unique"
 
   (let* ([terminal-idents (map terminal-ident/name
-                               (language-terminals self))]
+                               (language-terminals language))]
          [non-terminal-idents (map non-terminal-ident
-                                   (language-non-terminals self))]
+                                   (language-non-terminals language))]
          [symbol-namespace (append terminal-idents
                                    non-terminal-idents)]
          [duplicate (check-duplicates symbol-namespace datum=?)])
 
     (when duplicate
-      (raise-language-duplicate-symbol-error self duplicate)))
+      (raise-language-duplicate-symbol-error language duplicate)))
 
-  self)
+  language)
 
-(define (validate-language/valid-terminals self)
+(define (validate-language/valid-terminals language)
   (-> language? (or/c language? none/c))
   "ensure all the terminals in SELF are valid"
 
-  (map validate-terminal (language-terminals self))
+  (for ([terminal (in-list (language-terminals language))])
+    (validate-terminal terminal))
 
-  self)
+  language)
 
-; Terminal
-
-(define (validate-terminal self)
-  (-> terminal? (or/c terminal? none/c))
-  "ensure SELF is a valid terminal"
-
-  (~> self
-      (validate-terminal/valid-class)))
-
-(define (validate-terminal/valid-class self)
-  (-> terminal? (or/c terminal? none/c))
-  "ensure the class in SELF points to a valid binding"
-
-  (let* ([class (terminal-ident/class self)]
-         [binding (identifier-binding class)])
-    (unless binding
-      (raise-terminal-unbound-class-error (terminal-ident/class self))))
-
-  self)
-
-(define (validate-language/valid-non-terminals self)
+(define (validate-language/valid-non-terminals language)
   (-> language? (or/c language? none/c))
   "ensure all non-terminals in SELF are valid"
 
-  (map (curryr validate-non-terminal self)
-       (language-non-terminals self))
+  (for ([non-terminal (in-list (language-non-terminals language))])
+    (validate-non-terminal language non-terminal))
 
-  self)
+  language)
+
+; Terminal
+
+(define (validate-terminal terminal)
+  (-> terminal? (or/c terminal? none/c))
+  "ensure SELF is a valid terminal"
+
+  (~> terminal
+      (validate-terminal/valid-class)))
+
+(define (validate-terminal/valid-class terminal)
+  (-> terminal? (or/c terminal? none/c))
+  "ensure the class in SELF points to a valid binding"
+
+  (let* ([class (terminal-ident/class terminal)]
+         [binding (identifier-binding class)])
+    (unless binding
+      (raise-terminal-unbound-class-error (terminal-ident/class terminal))))
+
+  terminal)
 
 ; Non-Terminal
 
-(define (validate-non-terminal self lang)
-  (-> non-terminal? language? (or/c non-terminal? none/c))
+(define (validate-non-terminal language non-terminal)
+  (-> language? non-terminal? (or/c non-terminal? none/c))
   "ensure SELF is a valid non-terminal"
 
-  (~> self
+  (~> non-terminal
       (validate-non-terminal/unique-literals _)
       (validate-non-terminal/unique-productions _)
-      (validate-non-terminal/valid-productions _ lang)))
+      (validate-non-terminal/valid-productions language _)))
 
-(define (validate-non-terminal/unique-literals self)
+(define (validate-non-terminal/unique-literals non-terminal)
   (-> non-terminal? (or/c non-terminal? none/c))
   "ensure literals and datum-literals in SELF are unique"
 
-  (let* ([literals (non-terminal-literals self)]
-         [datum-literals (non-terminal-datum-literals self)]
+  (let* ([literals (non-terminal-literals non-terminal)]
+         [datum-literals (non-terminal-datum-literals non-terminal)]
          [literal-namespace (append literals datum-literals)]
          [duplicate (check-duplicates literal-namespace datum=?)])
     (when duplicate
-      (raise-non-terminal-duplicate-literal-error self duplicate)))
+      (raise-non-terminal-duplicate-literal-error non-terminal duplicate)))
 
-  self)
+  non-terminal)
 
-(define (validate-non-terminal/unique-productions self)
+(define (validate-non-terminal/unique-productions non-terminal)
   (-> non-terminal? (or/c non-terminal? none/c))
   "ensure productions in SELF are unique"
 
-  (let* ([productions (non-terminal-productions self)]
+  (let* ([productions (non-terminal-productions non-terminal)]
          [duplicate (check-duplicates productions pattern=?)])
     (when duplicate
-      (raise-non-terminal-duplicate-production-error self duplicate)))
+      (raise-non-terminal-duplicate-production-error non-terminal duplicate)))
 
-  self)
+  non-terminal)
 
-(define (validate-non-terminal/valid-productions self lang)
-  (-> non-terminal? language? (or/c non-terminal? none/c))
+(define (validate-non-terminal/valid-productions language non-terminal)
+  (-> language? non-terminal? (or/c non-terminal? none/c))
   "ensure productions in SELF are valid"
 
-  (map (curryr validate-production lang self)
-       (non-terminal-productions self))
+  (for ([production (in-list (non-terminal-productions non-terminal))])
+    (validate-production language non-terminal production))
 
-  self)
+  non-terminal)
 
 ; Production
 
-(define (validate-production self lang non-terminal)
-  (-> pattern? language? (or/c non-terminal? void?) pattern?)
+(define (validate-production language non-terminal production)
+  (-> language? (or/c non-terminal? void?) pattern? pattern?)
   "ensure SELF is a valid production"
 
-  (~> self
-      (validate-production/valid-idents _ lang non-terminal)))
+  (~> production
+      (validate-production/valid-idents language non-terminal _)))
 
-(define (validate-production/valid-idents self lang non-terminal)
-  (-> pattern?
-      language?
+(define (validate-production/valid-idents lang non-terminal production)
+  (-> language?
       (or/c non-terminal? void?)
+      pattern?
       pattern?)
   "ensure identifiers in SELF are valid"
 
-  (define (rec self prod lang non-terminal)
-    (-> pattern?
-        pattern?
-        language?
+  (define (rec language non-terminal production pattern)
+    (-> language?
         (or/c non-terminal? void?)
+        pattern?
+        pattern?
         pattern?)
     "ensure SELF references a valid literal, datum-literal, terminal, or non-terminal"
     (cond
-      [(p-ident? self)
-       (let ([ident (p-ident-ident self)]
+      [(p-ident? pattern)
+       (let ([ident (p-ident-ident pattern)]
              [literals (non-terminal-literals non-terminal)]
              [datum-literals (non-terminal-datum-literals non-terminal)]
              [terminal-idents (map terminal-ident/name
-                                   (language-terminals lang))]
+                                   (language-terminals language))]
              [non-terminal-idents (map non-terminal-ident
-                                       (language-non-terminals lang))])
+                                       (language-non-terminals language))])
          (unless (or (member ident literals datum=?)
                      (member ident datum-literals datum=?)
                      (member ident terminal-idents datum=?)
                      (member ident non-terminal-idents datum=?))
-           (raise-production-invalid-ident-error prod lang ident)))
-       self]
-      [(p-list? self)
-       (p-list (p-list-stx self)
-               (map (curryr rec prod lang non-terminal)
-                    (p-list-list self)))]
-      [(or (p-literal? self)
-           (p-repeat? self))
-       self]
-      [else (error "not a production:" self)]))
+           (raise-production-invalid-ident-error production language ident)))
+       pattern]
+      [(p-list? pattern)
+       (p-list (p-list-stx pattern)
+               (for/list ([pattern* (in-list (p-list-list pattern))])
+                 (rec language non-terminal production pattern*)))]
+      [(or (p-literal? pattern)
+           (p-repeat? pattern))
+       pattern]
+      [else (error "not a production:" pattern)]))
 
-  (rec self self lang non-terminal))
+  (rec lang non-terminal production production))
 
