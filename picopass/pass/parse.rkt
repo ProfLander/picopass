@@ -21,7 +21,7 @@
               (-> (~or * input:id)
                   (~or * output:id))
               processor:parse-processor
-              ...)
+              ...+)
            #:do [(define introduce (make-syntax-introducer))
                  (define self-ref (introduce (datum->syntax #'name 'pass)))]
            #:attr struct (pass this-syntax
