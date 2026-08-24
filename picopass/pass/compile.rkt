@@ -199,9 +199,10 @@
                    [pairs (for/list ([clause (in-list proc-clauses)])
                             (cons clause proc-output))])
 
-              (hash-update clause-pairs input-key
-                           (curryr append pairs)
-                           pairs)))])
+              (hash-set clause-pairs input-key
+                        (if (hash-has-key? clause-pairs input-key)
+                            (append (hash-ref clause-pairs input-key) pairs)
+                            pairs))))])
 
     (let ([syntax-input (language? pass-input)])
       [datum->syntax (pass-stx pass)
@@ -231,19 +232,30 @@
       (or/c (listof non-terminal?)
             (listof syntax?))
       syntax?)
+  #:trace-depth 5
   "compile the input handler corresponding to NON-TERMINAL
    to syntax-parse syntax using CLAUSES with OUTPUTS in context of PASS"
 
-  (let* ([undefined (generate-undefined-clauses pass clauses non-terminal)]
-         [clauses (append clauses undefined)]
-         [outputs (append outputs (map (const non-terminal) undefined))]
+  (let* ([auto-generate (and (language? (pass-input pass)) 
+                             (language? (pass-output pass)))]
+         [undefined (if auto-generate
+                        (generate-undefined-clauses pass clauses non-terminal)
+                        null)]
+
+         [clauses (if auto-generate
+                      (append clauses undefined)
+                      clauses)]
+
+         [outputs (if auto-generate
+                      (append outputs (map (const non-terminal) undefined))
+                      outputs)]
 
          [outputs
-          (for/list ([output (in-list outputs)])
-            (if (non-terminal? output)
+          (if auto-generate
+              (for/list ([output (in-list outputs)])
                 [language-introduce-datum (pass-output pass)
-                 (non-terminal-ident output)]
-                output))]
+                 (non-terminal-ident output)])
+              outputs)]
 
          [literals
           (for/list ([name (non-terminal-literal-names non-terminal)])
@@ -469,7 +481,7 @@
      (cons (p-ident ident) ident)]
 
     [(p-repeat stx min)
-     (cons (p-repeat stx min) stx)]))
+     (cons (p-repeat stx 0) (datum->pass-syntax pass '...))]))
 
 ; Processor clause
 
