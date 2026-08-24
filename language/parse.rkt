@@ -127,8 +127,8 @@
                                #'name
                                (make-delta #:remove (attribute literal-)
                                            #:add (attribute literal+))
-                               (make-delta #:remove (attribute literal-)
-                                           #:add (attribute literal+))
+                               (make-delta #:remove (attribute datum-literal-)
+                                           #:add (attribute datum-literal+))
                                (make-delta #:remove (attribute production-.struct)
                                            #:add (attribute production+.struct)))))
 

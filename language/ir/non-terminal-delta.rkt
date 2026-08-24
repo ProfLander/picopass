@@ -5,6 +5,7 @@
 ; Holds additions / removals for literals, datum-literals, and productions
 
 (require racket/function
+         racket/pretty
 
          picopass/delta
          picopass/syntax
@@ -65,19 +66,13 @@
 
   (let* ([literals (non-terminal-literals base)]
          [delta-literals (non-terminal-delta-delta-literals delta)]
-         [literals (apply-delta delta-literals literals
-                                #:equal? datum=?
-                                #:on-missing
-                                (raise-missing-removed-literal-error
-                                  (non-terminal-delta-stx delta)))]
+         [literals (delta-add delta-literals literals)]
+
 
          [datum-literals (non-terminal-datum-literals base)]
          [delta-datum-literals (non-terminal-delta-delta-datum-literals delta)]
-         [datum-literals (apply-delta delta-datum-literals datum-literals
-                                      #:equal? datum=?
-                                      #:on-missing
-                                      (raise-missing-removed-datum-literal-error
-                                        (non-terminal-delta-stx delta)))]
+         [datum-literals (delta-add delta-datum-literals datum-literals)]
+
 
          [productions (non-terminal-productions base)]
          [delta-productions (map-delta (curryr normalize-pattern literals datum-literals)
@@ -86,7 +81,19 @@
                                    #:equal? pattern=?
                                    #:on-missing
                                    (raise-missing-removed-production-error
-                                     (non-terminal-delta-stx delta)))])
+                                     (non-terminal-delta-stx delta)))]
+
+         [literals (delta-remove delta-literals literals
+                                 #:equal? datum=?
+                                 #:on-missing
+                                 (raise-missing-removed-literal-error
+                                   (non-terminal-delta-stx delta)))]
+
+         [datum-literals (delta-remove delta-datum-literals datum-literals
+                                       #:equal? datum=?
+                                       #:on-missing
+                                       (raise-missing-removed-datum-literal-error
+                                         (non-terminal-delta-stx delta)))])
 
     (non-terminal (non-terminal-stx base)
                   (non-terminal-ident base)

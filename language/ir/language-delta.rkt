@@ -60,7 +60,7 @@
   "ensure no duplicates are present in the terminal removals of SELF"
 
   (let* ([delta-terminals (language-delta-delta-terminals delta)]
-         [tms- (delta-remove delta-terminals)]
+         [tms- (delta-to-remove delta-terminals)]
          [duplicate (check-duplicates tms- terminal=?)])
     (when duplicate
       [raise-syntax-error (language-delta-name delta)
@@ -75,7 +75,7 @@
 
   (for ([non-terminal (in-list (language-delta-non-terminals delta))])
     (let* ([delta-productions (non-terminal-delta-delta-productions non-terminal)]
-           [productions- (delta-remove delta-productions)]
+           [productions- (delta-to-remove delta-productions)]
            [duplicate (check-duplicates productions- pattern=?)])
       (when duplicate
         [raise-syntax-error (language-delta-name delta)
