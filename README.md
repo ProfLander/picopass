@@ -9,6 +9,11 @@ Status
 ------
 Picopass is currently pre-1.0. Its core language and pass machinery are implemented; additional features such as input parameters and extra return values are planned for 1.0.
 
+Documentation
+-------------
+
+Formal documentation is available on [the repository's GitHub Pages site](https://proflander.github.io/picopass/).
+
 Example
 -------
 
