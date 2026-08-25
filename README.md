@@ -62,14 +62,17 @@ The following example defines a lambda calculus with n-ary abstractions and appl
 [define-pass unary-lambda
  (-> L0 L1)
 
+ ; A processor from L0 expr to L1 expr
  [expr
   (-> expr expr)
 
+  ; Processor clauses match input language forms and return output language forms
   [(abs ((~rec arg:ident) ...) (~rec body:expr))
    (for/fold ([acc (attribute body)])
              ([arg (in-list (reverse (attribute arg)))])
      #`(abs #,arg #,acc))]
 
+  ; The (~rec ...) action pattern recursively applies the pass to the target form (cata-morphism)
   [(app (~rec arg:expr) ...+)
    (for/fold ([acc (car (attribute arg))])
              ([arg (in-list (cdr (attribute arg)))])
