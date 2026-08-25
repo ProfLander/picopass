@@ -72,7 +72,7 @@ The following example defines a lambda calculus with n-ary abstractions and appl
              ([arg (in-list (reverse (attribute arg)))])
      #`(abs #,arg #,acc))]
 
-  ; The (~rec ...) action pattern recursively applies the pass to the target form (cata-morphism)
+  ; The (~rec ...) action pattern recursively applies the pass to the target form
   [(app (~rec arg:expr) ...+)
    (for/fold ([acc (car (attribute arg))])
              ([arg (in-list (cdr (attribute arg)))])
