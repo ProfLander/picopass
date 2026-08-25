@@ -50,11 +50,10 @@
 
 (define-syntax-class parse-non-terminal
   #:description "non-terminal"
-  (pattern ((~and name:id
-                  (~fail #:when (datum=? #'terminals #'name)))
-            (~optional (~seq #:literals [literal:id ...])
+  (pattern (name:id
+            (~optional (~seq #:literals [literal:id ...+])
                        #:defaults ([[literal 1] null]))
-            (~optional (~seq #:datum-literals [datum-literal:id ...])
+            (~optional (~seq #:datum-literals [datum-literal:id ...+])
                        #:defaults ([[datum-literal 1] null]))
             (~var production (parse-pattern no-literal?))
             ...+)
@@ -70,11 +69,9 @@
   (pattern (_ name:id
               #:extends extends:id
               (~alt (~optional (~seq #:entry-point entry-point:id))
-                    (~optional (~seq #:terminals- [terminal-:parse-terminal
-                                                   ...])
+                    (~optional (~seq #:terminals- [terminal-:parse-terminal ...+])
                                #:defaults ([[terminal-.struct 1] null]))
-                    (~optional (~seq #:terminals+ [terminal+:parse-terminal
-                                                   ...])
+                    (~optional (~seq #:terminals+ [terminal+:parse-terminal ...+])
                                #:defaults ([[terminal+.struct 1] null])))
               ...
               non-terminal:parse-non-terminal-delta
@@ -90,17 +87,16 @@
 (define-syntax-class parse-non-terminal-delta
   #:description "non-terminal extension"
 
-  (pattern ((~and name:id
-                  (~fail #:when (datum=? #'terminals #'name)))
+  (pattern (name:id
 
-            (~optional (~seq #:literals- [literal-:id ...])
+            (~optional (~seq #:literals- [literal-:id ...+])
                        #:defaults ([[literal- 1] null]))
-            (~optional (~seq #:literals+ [literal+:id ...])
+            (~optional (~seq #:literals+ [literal+:id ...+])
                        #:defaults ([[literal+ 1] null]))
 
-            (~optional (~seq #:datum-literals- [datum-literal-:id ...])
+            (~optional (~seq #:datum-literals- [datum-literal-:id ...+])
                        #:defaults ([[datum-literal- 1] null]))
-            (~optional (~seq #:datum-literals+ [datum-literal+:id ...])
+            (~optional (~seq #:datum-literals+ [datum-literal+:id ...+])
                        #:defaults ([[datum-literal+ 1] null]))
 
             (~optional (~and ((~datum -)
