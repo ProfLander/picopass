@@ -2,7 +2,9 @@ name: build docs
 
 on:
    push:
-      branches: [ scribble-docs ]
+      branches:
+        - scribble-docs
+        - master
    workflow_dispatch:
 
 jobs:
