@@ -27,7 +27,14 @@ jobs:
            run: raco pkg install --auto --skip-installed --link ./picopass
          
          - name: build documentation
-           run: raco scribble --html --dest doc --dest-name index picopass/scribblings/picopass.scrbl
+           run: >
+             raco scribble
+             --html
+             +m
+             --redirect-main https://docs.racket-lang.org/
+             --dest doc
+             --dest-name index
+             picopass/scribblings/picopass.scrbl
          
          - name: setup pages
            uses: actions/configure-pages@v4
