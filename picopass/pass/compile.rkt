@@ -491,15 +491,12 @@
 
   (match pat
     [(p-list _stx (list (p-literal lit)
-                        (p-ident ident+class)))
+                        (p-ident ident)))
      #:when (datum=? lit #'~rec)
 
-     (compile-clause-pattern/syntax-rec pass ident+class)]
-
-    [(p-list _stx (list (p-literal lit)
-                        (p-ident ident)))
-     #:when (datum=? lit #'rec)
-     (compile-clause-pattern/match-rec pass ident)]
+     (if (language? (pass-input pass))
+         (compile-clause-pattern/syntax-rec pass ident)
+         (compile-clause-pattern/match-rec pass ident))]
 
     [(p-list stx lst)
      (compile-clause-pattern/list pass stx lst)]
@@ -568,7 +565,7 @@
 
 (define (compile-clause-pattern/match-rec pass ident)
   (-> pass? syntax? syntax?)
-  "compile a (rec IDENT) match pattern to syntax in context of PASS"
+  "compile a (~rec IDENT) match pattern to syntax in context of PASS"
 
   (let ([pass-ref (pass-self-ref pass)])
     #`(app #,pass-ref #,ident)))
