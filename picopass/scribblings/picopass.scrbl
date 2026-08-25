@@ -212,11 +212,11 @@ Racket values, where predicates are used to assert their type.
 @racket[body-expr].
 
 When the input of a pass is a @racket[language-ident], @racket[pattern] acts
-as a subset of a @racket[syntax/parse] patterns, extended with the
+as a subset of a @racketmodname[syntax/parse] patterns, extended with the
 cata-morphism action pattern @racket[(~rec ident)] for dispatching the pass over
 @racket[ident] before the body is evaluated, and the processor body may use
-forms from the pattern bodies of a @racket[syntax/parse] syntax class.
+forms from the pattern bodies of a @racketmodname[syntax/parse] syntax class.
 
 When the input of a pass is a @racket[predicate-ident] or @racket[*],
-@racket[pattern] behaves as a @racket[racket/match] pattern,
+@racket[pattern] behaves as a @racketmodname[racket/match] pattern,
 with @racket[(~rec ident)] providing equivalent behavior.
