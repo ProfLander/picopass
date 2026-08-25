@@ -1,0 +1,51 @@
+name: build docs
+
+on:
+   push:
+      branches: [ scribble-docs ]
+   workflow_dispatch:
+
+jobs:
+   build:
+      runs-on: ubuntu-latest
+      permissions:
+         contents: read
+         pages: write
+         id-token: write
+      
+      steps:
+         - uses: actions/checkout@v4
+         
+         - name: setup racket
+           uses: Bogdanp/setup-racket@v1.14
+           with:
+              version: 'stable'
+         
+         - name: install packages
+           run: raco pkg install --auto --skip-installed --link ./picopass
+         
+         - name: build documentation
+           run: raco scribble --html --dest doc --dest-name index picopass/scribblings/picopass.scrbl
+         
+         - name: setup pages
+           uses: actions/configure-pages@v4
+         
+         - name: upload artifact
+           uses: actions/upload-pages-artifact@v3
+           with:
+              path: ./doc
+
+   deploy:
+      environment:
+         name: github-pages
+         url: ${{ steps.deployment.outputs.page_url }}
+      runs-on: ubuntu-latest
+      needs: build
+      permissions:
+         pages: write
+         id-token: write
+      steps:
+         - name: deploy to github pages
+           id: deployment
+           uses: actions/deploy-pages@v4
+
