@@ -84,15 +84,15 @@
 
   [(ir-number num) num]
 
-  [(ir-begin (list (rec body) ...))
+  [(ir-begin (list (~rec body) ...))
    #`(begin #,@body)]
 
-  [(ir-abs (list (rec arg) ...)
-           (rec body))
+  [(ir-abs (list (~rec arg) ...)
+           (~rec body))
    #`(abs (#,@arg) #,body)]
 
-  [(ir-app (rec proc)
-           (list (rec arg) ...))
+  [(ir-app (~rec proc)
+           (list (~rec arg) ...))
    #`(app #,proc #,@arg)]]]
 
 (printf "structs to L0: ~a\n"
