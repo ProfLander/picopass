@@ -21,6 +21,8 @@
            #:attr struct (p-repeat this-syntax 0))
   (pattern (~datum ...+)
            #:attr struct (p-repeat this-syntax 1))
+  (pattern kw:keyword
+           #:attr struct (p-keyword this-syntax))
   (pattern ident:id
            #:attr struct (if (literal? this-syntax)
                              (p-literal this-syntax)

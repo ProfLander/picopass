@@ -12,12 +12,12 @@
 (struct p-ident [ident]
   #:methods gen:custom-write
   [(%define (write-proc self port mode)
-     ((if mode write display)
-      (let ([name (p-ident-name self)])
-        (if mode
-            name
-            (list 'p-ident name)))
-      port))])
+            ((if mode write display)
+             (let ([name (p-ident-name self)])
+               (if mode
+                   name
+                   (list 'p-ident name)))
+             port))])
 
 (define (p-ident-name self)
   (-> p-ident? symbol?)
@@ -30,12 +30,12 @@
 (struct p-literal [ident]
   #:methods gen:custom-write
   [(%define (write-proc self port mode)
-     ((if mode write display)
-      (let ([name (p-literal-name self)])
-        (if mode
-            name
-            (list 'p-literal name)))
-      port))])
+            ((if mode write display)
+             (let ([name (p-literal-name self)])
+               (if mode
+                   name
+                   (list 'p-literal name)))
+             port))])
 
 (define (p-literal-name self)
   (-> p-literal? symbol?)
@@ -44,29 +44,44 @@
 
   (syntax-e (p-literal-ident self)))
 
+; Keyword
+(struct p-keyword [stx]
+  #:methods gen:custom-write
+  [(%define (write-proc self port mode)
+            ((if mode write display)
+             (let ([symbol (p-keyword-symbol self)])
+               (if mode
+                   symbol
+                   (list 'p-keyword symbol)))
+             port))])
+
+(define (p-keyword-symbol self)
+  (-> p-keyword? keyword?)
+  (syntax-e (p-keyword-stx self)))
+
 ; List
 (struct p-list [stx list]
   #:methods gen:custom-write
   [(%define (write-proc self port mode)
-     ((if mode write display)
-      (let ([lst (p-list-list self)])
-        (if mode
-            lst
-            (cons 'p-list lst)))
-      port))])
+            ((if mode write display)
+             (let ([lst (p-list-list self)])
+               (if mode
+                   lst
+                   (cons 'p-list lst)))
+             port))])
 
 ; Repetition (... / ...+)
 (struct p-repeat [stx min]
   #:methods gen:custom-write
   [(%define (write-proc self port mode)
-     ((if mode write display)
-      (let ([min (p-repeat-min self)])
-        (if mode
-            (case min
-              [(0) '...]
-              [(1) '...+])
-            (list 'p-repeat min)))
-      port))])
+            ((if mode write display)
+             (let ([min (p-repeat-min self)])
+               (if mode
+                   (case min
+                     [(0) '...]
+                     [(1) '...+])
+                   (list 'p-repeat min)))
+             port))])
 
 (define (pattern? self)
   (-> any/c boolean?)
@@ -75,6 +90,7 @@
 
   (or (p-ident? self)
       (p-literal? self)
+      (p-keyword? self)
       (p-list? self)
       (p-repeat? self)))
 
@@ -93,6 +109,11 @@
           (p-literal? b))
      (datum=? (p-literal-ident a)
               (p-literal-ident b))]
+
+    [(and (p-keyword? a)
+          (p-keyword? b))
+     (datum=? (p-keyword-stx a)
+              (p-keyword-stx b))]
 
     [(and (p-list? a)
           (p-list? b))
@@ -119,6 +140,7 @@
   (cond
     [(p-ident? self) (p-ident-ident self)]
     [(p-literal? self) (p-literal-ident self)]
+    [(p-keyword? self) (p-keyword-stx self)]
     [(p-list? self) (p-list-stx self)]
     [(p-repeat? self) (p-repeat-stx self)]
     [else (error "not a pattern:" self)]))

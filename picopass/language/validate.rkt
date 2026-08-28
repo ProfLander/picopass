@@ -186,6 +186,7 @@
                (for/list ([pattern* (in-list (p-list-list pattern))])
                  (rec language non-terminal production pattern*)))]
       [(or (p-literal? pattern)
+           (p-keyword? pattern)
            (p-repeat? pattern))
        pattern]
       [else (error "not a production:" pattern)]))
