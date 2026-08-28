@@ -132,10 +132,16 @@ Since language and pass patterns are expressed using Racket's existing syntax to
 Installation
 ------------
 
-Clone the repository and install it as a linked package from its root:
+Clone the repository and either install via `make`:
 
 ```bash
-raco pkg install --link picopass
+make install
+```
+
+Or via `raco pkg install`:
+
+```bash
+raco pkg install --auto --link picopass-lib picopass-test picopass-doc picopass
 ```
 
 Usage
