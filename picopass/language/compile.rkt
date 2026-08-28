@@ -146,6 +146,9 @@
     [(p-literal? production)
      (language-introduce-datum lang (p-literal-ident production))]
 
+    [(p-keyword? production)
+     (p-keyword-stx production)]
+
     [(p-list? production)
      [datum->syntax (p-list-stx production)
       (for/list ([pattern (in-list (p-list-list production))])

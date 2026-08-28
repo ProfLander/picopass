@@ -54,6 +54,8 @@
         pat])]
     [(p-literal ident)
      (p-literal ident)]
+    [(p-keyword ident)
+     (p-keyword ident)]
     [(p-repeat stx min)
      (p-repeat stx min)]))
 

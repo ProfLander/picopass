@@ -477,6 +477,9 @@
                                  (p-ident ident)))
                    tmp))))]
 
+    [(p-keyword stx)
+     (cons (p-keyword stx) stx)]
+
     [(p-literal ident)
      (cons (p-ident ident) ident)]
 
