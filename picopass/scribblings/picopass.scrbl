@@ -126,6 +126,12 @@ to remove and add, respectively.
 @racket[-] and @racket[+] clauses specify production @racket[pattern]s to remove
 and add, respectively.
 
+@section{The @racket[define-parser] Form}
+
+@defform[(define-parser parser-name language-name)]
+
+Binds the name @racket[parser-name] to an automatically-generated parser for the @racket[language-name] language.
+
 @section{The @racket[define-pass] Form}
 
 The @racket[define-pass] form defines a transformation between a source

@@ -20,43 +20,43 @@
   (-> language? syntax?)
   "compile LANGUAGE to syntax"
   [with-language-syntax language ([begin 'begin]
-                                  [define 'define]
-                                  [define-syntax 'define-syntax]
+                                  [define-syntax 'define-syntax])
+
+   (with-syntax* ([ident (language-ident language)]
+
+                  [(terminal ...)
+                   (for/list ([terminal (in-list (language-terminals language))])
+                     (compile-terminal language terminal))]
+
+                  [(non-terminal ...)
+                   (for/list ([non-terminal (in-list (language-non-terminals language))])
+                     (compile-non-terminal language non-terminal))])
+
+     #`(begin
+
+         (define-syntax ident
+           #,language)
+
+         terminal
+         ...
+
+         non-terminal
+         ...))])
+
+(define (compile-language-parser name language)
+  (-> syntax? language? syntax?)
+  "compile the parser for LANGUAGE to syntax"
+  [with-language-syntax language ([define 'define]
                                   [syntax-parser 'syntax-parser]
                                   [~var '~var]
                                   [this-syntax 'this-syntax])
-
    [with-language-bindings language ([entry-point
                                       (language-entry-point-ident language)])
-
-    (with-syntax* ([ident (language-ident language)]
-
-                   [(terminal ...)
-                    (for/list ([terminal (in-list (language-terminals language))])
-                      (compile-terminal language terminal))]
-
-                   [(non-terminal ...)
-                    (for/list ([non-terminal (in-list (language-non-terminals language))])
-                      (compile-non-terminal language non-terminal))]
-
-                   [parse-language
-                    (format-id (language-context language) "parse-~a" #'ident)])
-
-      #`(begin
-
-          (define-syntax ident
-            #,language)
-
-          terminal
-          ...
-
-          non-terminal
-          ...
-
-          (define parse-language
-            (syntax-parser
-              [(~var _ entry-point) 
-               this-syntax]))))]])
+    (with-syntax* ([name name])
+      #`(define name
+          (syntax-parser
+            [(~var _ entry-point)
+             this-syntax])))]])
 
 (define (compile-terminal language terminal)
   (-> language? terminal? syntax?)
@@ -86,17 +86,17 @@
          [name (non-terminal-name non-terminal)]
 
          [literals
-          (for/list ([literal (in-list (non-terminal-literals 
+          (for/list ([literal (in-list (non-terminal-literals
                                          non-terminal))])
             (language-introduce-datum language literal))]
 
          [datum-literals
-          (for/list ([datum-literal (in-list (non-terminal-datum-literals 
+          (for/list ([datum-literal (in-list (non-terminal-datum-literals
                                                non-terminal))])
             (language-introduce-datum language datum-literal))]
 
          [productions
-          (for/list ([production (in-list (non-terminal-productions 
+          (for/list ([production (in-list (non-terminal-productions
                                             non-terminal))])
             (compile-production language non-terminal production))])
 

@@ -39,6 +39,9 @@ The following example defines a lambda calculus with n-ary abstractions and appl
    (abs (ident ...) expr)
    (app expr ...+))]
 
+; Define a parser for L0
+(define-parser parse-L0 L0)
+
 ; Define some syntax in L0
 (define l0-syntax #'(app (abs (x y) x) foo bar))
 
@@ -56,6 +59,9 @@ The following example defines a lambda calculus with n-ary abstractions and appl
       (app expr ...+))
    (+ (abs ident expr)
       (app expr expr)))]
+
+; Define a parser for L1
+(define-parser parse-L1 L1)
 
 ; Define some syntax in L1
 (define l1-syntax #'(app (app (abs x (abs y x)) foo) bar))
