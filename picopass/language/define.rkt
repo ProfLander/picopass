@@ -22,6 +22,22 @@
 (provide (all-from-out syntax/parse)
          (all-defined-out))
 
+(define-for-syntax (syntax-local-language lctx ident)
+  (let ([language [syntax-local-value ident
+                   (thunk
+                     [raise-syntax-error 'define-language
+                      (format "unbound language ~a" (syntax-e ident))
+                      lctx
+                      #'delta.extends])]])
+
+    (unless (language? language)
+      [raise-syntax-error 'define-language
+       (format "~a is not a language" (syntax-e ident))
+       lctx
+       #'delta.extends])
+
+    language))
+
 [define-syntax-parser define-language
  ; Define a named language with a given set of terminals,
  ; non-terminals, and specific entry point non-terminal
@@ -49,18 +65,7 @@
  ; and a potentially-rebound entry point
  [delta:parse-language-delta
 
-  (let ([base [syntax-local-value #'delta.extends
-               (thunk
-                 [raise-syntax-error 'define-language
-                  "unbound base language"
-                  this-syntax
-                  #'delta.extends])]])
-
-    (unless (language? base)
-      [raise-syntax-error 'define-language
-       "bound identifier is not a language"
-       this-syntax
-       #'delta.extends])
+  (let ([base (syntax-local-language this-syntax #'delta.extends)])
 
     (let* ([delta (attribute delta.struct)]
            [delta-name (language-delta-name delta)]
@@ -78,3 +83,16 @@
                            (pretty-format (syntax->datum stx)
                                           #:mode 'write))
         stx)))]]
+
+[define-syntax-parser define-parser
+ [(_ name:id language:id)
+
+  (define lang (syntax-local-language this-syntax #'language))
+
+  (let* ([stx (compile-language-parser #'name lang)])
+    (log-picopass-info "define-language-parser ~a output:\n~a\n"
+                       (language-name lang)
+                       (pretty-format (syntax->datum stx)
+                                      #:mode 'write))
+    stx)]]
+
