@@ -94,7 +94,8 @@
   (let* ([class (terminal-ident/class terminal)]
          [binding (identifier-binding class)])
     (unless binding
-      (raise-terminal-unbound-class-error (terminal-ident/class terminal))))
+      [raise-terminal-unbound-class-error terminal
+       (terminal-ident/class terminal)]))
 
   terminal)
 
