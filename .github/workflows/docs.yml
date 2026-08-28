@@ -24,17 +24,10 @@ jobs:
               version: 'stable'
          
          - name: install packages
-           run: raco pkg install --auto --skip-installed --link ./picopass
+           run: make install
          
          - name: build documentation
-           run: >
-             raco scribble
-             --html
-             +m
-             --redirect-main https://docs.racket-lang.org/
-             --dest doc
-             --dest-name index
-             picopass/scribblings/picopass.scrbl
+           run: make build-standalone-docs
          
          - name: setup pages
            uses: actions/configure-pages@v4
@@ -42,7 +35,7 @@ jobs:
          - name: upload artifact
            uses: actions/upload-pages-artifact@v3
            with:
-              path: ./doc
+              path: ./docs/picopass
 
    deploy:
       environment:
