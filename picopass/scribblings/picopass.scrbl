@@ -73,19 +73,21 @@ language.
                     (terminal (name syntax-class))
 
                     (non-terminal (name
-                                    [#:literals (ident ...+)]
-                                    [#:datum-literals (ident ...+)]
+                                    [#:literals (literal-ident ...+)]
+                                    [#:datum-literals (literal-ident ...+)]
                                     (code:line pattern ...+)))
 
                     (non-terminal-delta (name
-                                          [#:literals- (ident ...+)]
-                                          [#:literals+ (ident ...+)]
-                                          [#:datum-literals- (ident ...+)]
-                                          [#:datum-literals+ (ident ...+)]
+                                          [#:literals- (literal-ident ...+)]
+                                          [#:literals+ (literal-ident ...+)]
+                                          [#:datum-literals- (literal-ident ...+)]
+                                          [#:datum-literals+ (literal-ident ...+)]
                                           [(- pattern ...+)]
                                           [(+ pattern ...+)]))
 
                     (pattern ident
+                             literal-ident
+                             keyword
                              (pattern ...)
                              ...
                              ...+)]]
@@ -109,8 +111,8 @@ surrounding definition scope.
 @racket[#:datum-literals] declares literals that are matched by their written
 form.
 
-@racket[pattern] can reference a terminal or non-terminal identifier, contain
-lists of nested patterns, and specify @racket[...] (zero or more) or
+@racket[pattern] can contain terminal or non-terminal identifiers, literals,
+keywords, lists of nested patterns, and @racket[...] (zero or more) or
 @racket[...+] (one or more) repetitions.
 
 The @racket[language-delta] clause derives a language from an existing language:
