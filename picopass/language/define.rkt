@@ -7,6 +7,7 @@
                      racket/pretty
 
                      picopass/logger
+                     picopass/syntax
 
                      picopass/language/parse
                      picopass/language/normalize
@@ -14,7 +15,8 @@
                      picopass/language/compile
 
                      picopass/language/ir/language
-                     picopass/language/ir/language-delta)
+                     picopass/language/ir/language-delta
+                     picopass/language/ir/non-terminal)
 
          syntax/parse
          syntax/parse/define)
@@ -84,7 +86,7 @@
                                           #:mode 'write))
         stx)))]]
 
-[define-syntax-parser define-parser
+[define-syntax-parser define-language-parser
  [(_ name:id language:id)
 
   (define lang (syntax-local-language this-syntax #'language))
@@ -95,4 +97,36 @@
                        (pretty-format (syntax->datum stx)
                                       #:mode 'write))
     stx)]]
+
+[define-syntax-parser define-language-classes
+ [(_ language:id [name:id class:id] ...)
+
+  (let* ([lang (syntax-local-language this-syntax #'language)]
+         [non-terminals (language-non-terminals lang)]
+         [non-terminal-idents
+          (for/list ([non-terminal (in-list non-terminals)])
+            (non-terminal-ident non-terminal))])
+
+    [with-syntax ([(class ...)
+                   (for/list ([class (in-list (attribute class))])
+
+                     (unless (member class non-terminal-idents datum=?)
+                       [raise-syntax-error 'define-language-classes
+                        (format "~a does not name a non-terminal in ~a"
+                                (syntax-e class)
+                                (language-name lang))])
+
+                     (make-rename-transformer
+                       (language-introduce lang class)))])
+
+      (let ([stx #'(begin
+                     (define-syntax name class)
+                     ...)])
+
+        (log-picopass-info "define-language-classes ~a output:\n~a\n"
+                           (language-name lang)
+                           (pretty-format (syntax->datum stx)
+                                          #:mode 'write))
+
+        stx)])]]
 
