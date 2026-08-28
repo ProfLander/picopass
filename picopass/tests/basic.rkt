@@ -21,7 +21,7 @@
    (abs (ident ...) expr)
    (app expr ...+))]
 
-(define-parser parse-L0 L0)
+(define-language-parser parse-L0 L0)
 
 (printf "parsed L0: ~a\n"
         (~> #'(begin (app (abs (x y) x) 1234 5678))
@@ -40,7 +40,7 @@
    (+ (abs ident expr)
       (app expr expr)))]
 
-(define-parser parse-L1 L1)
+(define-language-parser parse-L1 L1)
 
 (printf "parsed L1: ~a\n"
         (~> #'(begin (app (app (abs x (abs y x)) 1234) 5678))

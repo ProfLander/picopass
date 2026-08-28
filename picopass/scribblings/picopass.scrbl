@@ -126,11 +126,23 @@ to remove and add, respectively.
 @racket[-] and @racket[+] clauses specify production @racket[pattern]s to remove
 and add, respectively.
 
-@section{The @racket[define-parser] Form}
+@subsection{Products of @racket[define-language]}
 
-@defform[(define-parser parser-name language-name)]
+@defform[(define-language-parser parser-name language-name)]
 
-Binds the name @racket[parser-name] to an automatically-generated parser for the @racket[language-name] language.
+Binds @racket[parser-name] to a parser for @racket[language-name].
+
+This is chiefly useful as a validation mechanism, as a successful parse returns
+the original syntax unmodified.
+
+@defform[(define-language-classes language-name
+           [ident non-terminal-ident] ...)]
+
+Binds the supplied @racket[name]s to syntax classes corresponding to the
+respective @racket[non-terminal-ident].
+
+This is useful in language composition, as it allows the terminals of one
+language to mention the non-terminals of another.
 
 @section{The @racket[define-pass] Form}
 
