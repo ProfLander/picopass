@@ -25,7 +25,7 @@
 
 (define-syntax-class parse-language
   #:description "language"
-  (pattern (_ name:id
+  (pattern (_ name:id ~!
               #:entry-point entry-point:id
               (~seq #:terminals [terminal:parse-terminal
                                  ...+])
@@ -58,7 +58,7 @@
 
 (define-syntax-class parse-non-terminal
   #:description "non-terminal"
-  (pattern (name:id
+  (pattern (name:id ~!
             (~optional (~seq #:literals [literal:id ...+])
                        #:defaults ([[literal 1] null]))
             (~optional (~seq #:datum-literals [datum-literal:id ...+])
@@ -79,7 +79,7 @@
 
 (define-syntax-class parse-language-delta
   #:description "language extension"
-  (pattern (_ name:id
+  (pattern (_ name:id ~!
               #:extends extends:id
               (~alt (~optional (~seq #:entry-point entry-point:id))
                     (~optional (~seq #:terminals- [terminal-:parse-terminal ...+])
@@ -105,7 +105,7 @@
 (define-syntax-class parse-non-terminal-delta
   #:description "non-terminal extension"
 
-  (pattern (name:id
+  (pattern (name:id ~!
 
             (~optional (~seq #:literals- [literal-:id ...+])
                        #:defaults ([[literal- 1] null]))

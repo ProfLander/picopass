@@ -21,7 +21,7 @@
 (define-syntax-class parse-pass
   #:description "pass"
   #:datum-literals [-> *]
-  (pattern (_ name:id
+  (pattern (_ name:id ~!
               (-> (~or * input:id)
                   (~or * output:id))
               processor:parse-processor
@@ -41,7 +41,7 @@
 (define-syntax-class parse-processor
   #:description "processor"
   #:datum-literals [: -> *]
-  (pattern (name:id
+  (pattern (name:id ~!
              (-> (~or *
                       input:id)
                  (~or *
@@ -60,7 +60,7 @@
 
 (define-syntax-class parse-processor-clause
   #:description "processor clause"
-  (pattern ((~var pat (parse-pattern processor-clause-literal?))
+  (pattern ((~var pat (parse-pattern processor-clause-literal?)) ~!
             body ...+)
            #:do [(log-picopass-debug "parse-processor-clause:\n~a"
                                      (pretty-format (syntax->datum this-syntax)))]
