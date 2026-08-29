@@ -144,7 +144,10 @@
              #'(~var %_ ident)]]))]
 
     [(p-literal? production)
-     (language-introduce-datum lang (p-literal-ident production))]
+     (if (datum=? #'~maybe (p-literal-ident production))
+         [with-language-syntax lang ([~optional '~optional])
+          #'~optional]
+         (language-introduce-datum lang (p-literal-ident production)))]
 
     [(p-keyword? production)
      (p-keyword-stx production)]

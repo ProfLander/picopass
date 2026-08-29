@@ -32,7 +32,8 @@
   #:trace #f
   "pattern literal recognition predicate"
 
-  (datum=? #'~rec stx))
+  (or (datum=? #'~rec stx) 
+      (datum=? #'~maybe stx)))
 
 (define (processor-clause-pattern->non-terminal-pattern pat)
   (-> pattern? pattern?)

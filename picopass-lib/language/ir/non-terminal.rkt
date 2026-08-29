@@ -15,6 +15,10 @@
 
 (provide (all-defined-out))
 
+(define (production-literal? stx)
+  (-> syntax? boolean?)
+  (datum=? stx #'~maybe))
+
 (struct non-terminal [stx
 
                       ident
