@@ -72,14 +72,19 @@
   "compile syntax-parse dispatch for PASS to syntax"
 
   (let* ([input (pass-input pass)]
-         [non-terminals (language-non-terminals input)])
+         [non-terminals (language-non-terminals input)]
+         [processors (pass-processors pass)]
+         [input-idents
+          (remove-duplicates
+            (for/list ([processor (in-list (pass-processors pass))])
+              (non-terminal-ident (processor-input processor)))
+            datum=?)])
 
     (let-values ([(non-terminal-idents pass-idents)
                   (for/lists (_non-terminal-idents _pass-idents)
-                             ([non-terminal (in-list non-terminals)])
-                    (let ([ident (non-terminal-ident non-terminal)])
-                      (values (language-introduce input ident)
-                              (pass-introduce pass ident))))])
+                             ([ident (in-list input-idents)])
+                    (values (language-introduce input ident)
+                            (pass-introduce pass ident)))])
 
       [with-pass-syntax pass ([syntax-parser 'syntax-parser]
                               [~var '~var]
@@ -113,8 +118,8 @@
                             [quote 'quote])
 
      (with-syntax ([pass-name (pass-name pass)]
-                   [(processor-ident ...) processor-idents]
-                   [(processor-pred ...) processor-inputs])
+                   [(processor-pred ...) processor-inputs]
+                   [(processor-ident ...) processor-idents])
 
        #`(λ (in)
            (cond
