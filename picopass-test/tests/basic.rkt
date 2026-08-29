@@ -62,107 +62,110 @@
 
 ;; from-structs: arbitrary record IR to L0 syntax
 
-(struct ir-ident [ident])
-(struct ir-number [num])
-(struct ir-begin [body])
-(struct ir-abs [args body])
-(struct ir-app [proc args])
+(begin
+  (struct ir-ident [ident])
+  (struct ir-number [num])
+  (struct ir-begin [body])
+  (struct ir-abs [args body])
+  (struct ir-app [proc args])
 
-(define (ir-expr? val)
-  (or (ir-ident? val)
-      (ir-number? val)
-      (ir-begin? val)
-      (ir-abs? val)
-      (ir-app? val)))
+  (define (ir-expr? val)
+    (or (ir-ident? val)
+        (ir-number? val)
+        (ir-begin? val)
+        (ir-abs? val)
+        (ir-app? val)))
 
-(define (ir? val)
-  (ir-expr? val))
+  (define (ir? val)
+    (ir-expr? val))
 
-[define-pass from-structs
- (-> ir? L0)
+  [define-pass from-structs
+   (-> ir? L0)
 
- [expr
-  (-> ir-expr? expr)
+   [expr
+    (-> ir-expr? expr)
 
-  [(ir-ident ident) ident]
+    [(ir-ident ident) ident]
 
-  [(ir-number num) num]
+    [(ir-number num) num]
 
-  [(ir-begin (list (~rec body) ...))
-   #`(begin #,@body)]
+    [(ir-begin (list (~rec body) ...))
+     #`(begin #,@body)]
 
-  [(ir-abs (list (~rec arg) ...)
-           (~rec body))
-   #`(abs (#,@arg) #,body)]
+    [(ir-abs (list (~rec arg) ...)
+             (~rec body))
+     #`(abs (#,@arg) #,body)]
 
-  [(ir-app (~rec proc)
-           (list (~rec arg) ...))
-   #`(app #,proc #,@arg)]]]
+    [(ir-app (~rec proc)
+             (list (~rec arg) ...))
+     #`(app #,proc #,@arg)]]]
 
-(printf "structs to L0: ~a\n"
-        (~> (ir-begin
-              (list (ir-app (ir-abs (list (ir-ident 'x) (ir-ident 'y))
-                                    (ir-ident 'x))
-                            (list (ir-number 1234)
-                                  (ir-number 5678)))))
-            (from-structs)
-            (syntax->datum)
-            (pretty-format)))
+  (printf "structs to L0: ~a\n"
+          (~> (ir-begin
+                (list (ir-app (ir-abs (list (ir-ident 'x) (ir-ident 'y))
+                                      (ir-ident 'x))
+                              (list (ir-number 1234)
+                                    (ir-number 5678)))))
+              (from-structs)
+              (syntax->datum)
+              (pretty-format))))
 
 ;; unary-lambda: L0 syntax to L1 syntax
 
-[define-pass unary-lambda
- (-> L0 L1)
+(begin
+  [define-pass unary-lambda
+   (-> L0 L1)
 
- [expr-abs
-  (-> expr expr)
+   [expr-abs
+    (-> expr expr)
 
-  [(abs ((~rec arg:ident) ...) (~rec body:expr))
-   (for/fold ([acc (attribute body)])
-             ([arg (in-list (reverse (attribute arg)))])
-     #`(abs #,arg #,acc))]]
+    [(abs ((~rec arg:ident) ...) (~rec body:expr))
+     (for/fold ([acc (attribute body)])
+               ([arg (in-list (reverse (attribute arg)))])
+       #`(abs #,arg #,acc))]]
 
- [expr-app
-  (-> expr expr)
+   [expr-app
+    (-> expr expr)
 
-  [(app (~rec arg:expr) ...+)
-   (for/fold ([acc (car (attribute arg))])
-             ([arg (in-list (cdr (attribute arg)))])
-     #`(app #,acc #,arg))]]]
+    [(app (~rec arg:expr) ...+)
+     (for/fold ([acc (car (attribute arg))])
+               ([arg (in-list (cdr (attribute arg)))])
+       #`(app #,acc #,arg))]]]
 
-(printf "L0 to L1: ~a\n"
-        (~> #'(begin (app (abs (x y) x) 1234 5678))
-            (unary-lambda)
-            (syntax->datum)
-            (pretty-format)))
+  (printf "L0 to L1: ~a\n"
+          (~> #'(begin (app (abs (x y) x) 1234 5678))
+              (unary-lambda)
+              (syntax->datum)
+              (pretty-format))))
 
 ;; to-source: L1 syntax to string source
 
-[define-pass to-source
- (-> L1 string?)
+(begin
+  [define-pass to-source
+   (-> L1 string?)
 
- [expr
-  (-> expr string?)
+   [expr
+    (-> expr string?)
 
-  [ident:ident
-   (~a (syntax-e #'ident))]
+    [ident:ident
+     (~a (syntax-e #'ident))]
 
-  [number:number
-   (~a (syntax-e #'number))]
+    [number:number
+     (~a (syntax-e #'number))]
 
-  [(begin (~rec body:expr) ...)
-   (~a (cons 'begin
-             (map syntax-e (attribute body))))]
+    [(begin (~rec body:expr) ...)
+     (~a (cons 'begin
+               (map syntax-e (attribute body))))]
 
-  [(abs arg:ident (~rec body:expr))
-   (format "(abs ~a ~a)" (syntax-e #'arg) (syntax-e #'body))]
+    [(abs arg:ident (~rec body:expr))
+     (format "(abs ~a ~a)" (syntax-e #'arg) (syntax-e #'body))]
 
-  [(app (~rec proc:expr) (~rec arg:expr))
-   (format "(app ~a ~a)" (syntax-e #'proc) (syntax-e #'arg))]]]
+    [(app (~rec proc:expr) (~rec arg:expr))
+     (format "(app ~a ~a)" (syntax-e #'proc) (syntax-e #'arg))]]]
 
-(printf "L0 to source: ~a\n"
-        (~> #'(begin (app (abs (x y) x) 1234 5678))
-            (unary-lambda)
-            (to-source)
-            (pretty-format)))
+  (printf "L0 to source: ~a\n"
+          (~> #'(begin (app (abs (x y) x) 1234 5678))
+              (unary-lambda)
+              (to-source)
+              (pretty-format))))
 
