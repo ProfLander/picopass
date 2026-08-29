@@ -74,8 +74,8 @@
   (let* ([input (pass-input pass)]
          [non-terminals (language-non-terminals input)])
 
-    (let-values ([(language-idents pass-idents)
-                  (for/lists (_language-idents _pass-idents)
+    (let-values ([(non-terminal-idents pass-idents)
+                  (for/lists (_non-terminal-idents _pass-idents)
                              ([non-terminal (in-list non-terminals)])
                     (let ([ident (non-terminal-ident non-terminal)])
                       (values (language-introduce input ident)
@@ -86,11 +86,11 @@
                               [attribute 'attribute]
                               [%app '#%app])
 
-       (with-syntax ([(language-ident ...) language-idents]
+       (with-syntax ([(non-terminal-ident ...) non-terminal-idents]
                      [(pass-ident ...) pass-idents])
 
          #`(syntax-parser
-             [(~var prod language-ident)
+             [(~var prod non-terminal-ident)
               (%app pass-ident (attribute prod))]
              ...))])))
 

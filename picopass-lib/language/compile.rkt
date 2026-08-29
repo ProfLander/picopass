@@ -103,7 +103,14 @@
     [with-language-syntax language ([define-syntax-class 'define-syntax-class]
                                     [pattern 'pattern]
                                     [description
-                                     (format "~a ~a" language-name name)])
+                                     (format "~a ~a" language-name name)]
+                                    [log-picopass-debug 'log-picopass-debug]
+                                    [%datum '#%datum]
+                                    [%app '#%app]
+                                    [pretty-format 'pretty-format]
+                                    [syntax->datum 'syntax->datum]
+                                    [this-syntax 'this-syntax]
+                                    [quote 'quote])
 
      [with-language-bindings language ([class-name name])
 
@@ -123,7 +130,11 @@
             ...
             datum-literal
             ...
-            (pattern production)
+            (pattern production
+                     #:do ([log-picopass-debug (%datum . "parse ~a:\n~a")
+                            description
+                            (%app pretty-format (%app syntax->datum this-syntax)
+                                  #:mode 'display)]))
             ...))]]))
 
 (define (compile-production lang non-terminal production)

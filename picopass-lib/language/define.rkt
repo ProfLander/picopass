@@ -19,9 +19,12 @@
                      picopass/language/ir/non-terminal)
 
          syntax/parse
-         syntax/parse/define)
+         syntax/parse/define
+
+         picopass/logger)
 
 (provide (all-from-out syntax/parse)
+         (all-from-out picopass/logger)
          (all-defined-out))
 
 (define-for-syntax (syntax-local-language lctx ident)
