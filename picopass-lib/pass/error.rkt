@@ -115,3 +115,9 @@
            lang-name)
    pattern])
 
+(define (raise-processor-clause-divergent-rec-error self pattern)
+  (-> processor-clause? syntax? none/c)
+  [raise-processor-clause-error self
+   "use of ~rec would diverge"
+   pattern])
+
