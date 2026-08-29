@@ -31,8 +31,11 @@
                                  ...+])
               non-terminal:parse-non-terminal
               ...+)
+
            #:do [(log-picopass-debug "parse-language:\n~a"
-                                     (pretty-format this-syntax))]
+                                     (pretty-format 
+                                       (syntax->datum this-syntax)))]
+
            #:attr struct (language this-syntax
                                    (attribute name)
                                    (attribute entry-point)
@@ -43,6 +46,11 @@
 (define-syntax-class parse-terminal
   #:description "terminal"
   (pattern [name:id class:id]
+
+           #:do [(log-picopass-debug "parse-terminal:\n~a"
+                                     (pretty-format 
+                                       (syntax->datum this-syntax)))]
+
            #:attr struct
            (terminal this-syntax
                      #'name
@@ -55,8 +63,13 @@
                        #:defaults ([[literal 1] null]))
             (~optional (~seq #:datum-literals [datum-literal:id ...+])
                        #:defaults ([[datum-literal 1] null]))
-            (~var production (parse-pattern no-literal?))
+            (~var production (parse-pattern production-literal?))
             ...+)
+
+           #:do [(log-picopass-debug "parse-non-terminal:\n~a"
+                                     (pretty-format 
+                                       (syntax->datum this-syntax)))]
+
            #:attr struct
            (non-terminal this-syntax
                          #'name
@@ -76,6 +89,11 @@
               ...
               non-terminal:parse-non-terminal-delta
               ...)
+
+           #:do [(log-picopass-debug "parse-language-delta:\n~a"
+                                     (pretty-format 
+                                       (syntax->datum this-syntax)))]
+
            #:attr struct
            (language-delta this-syntax
                            (attribute name)
@@ -102,17 +120,21 @@
             (~optional (~and ((~datum -)
                               ~!
                               (~var production-
-                                    (parse-pattern no-literal?))
+                                    (parse-pattern production-literal?))
                               ...+)
                              to-remove)
                        #:defaults ([[production-.struct 1] null]))
             (~optional (~and ((~datum +)
                               ~!
                               (~var production+
-                                    (parse-pattern no-literal?))
+                                    (parse-pattern production-literal?))
                               ...+)
                              to-add)
                        #:defaults ([[production+.struct 1] null])))
+
+           #:do [(log-picopass-debug "parse-non-terminal-delta:\n~a"
+                                     (pretty-format 
+                                       (syntax->datum this-syntax)))]
 
            #:fail-unless (or (attribute to-remove)
                              (attribute to-add))

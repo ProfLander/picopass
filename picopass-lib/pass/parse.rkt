@@ -4,7 +4,11 @@
 ;
 ; Parses definition syntax and produces pass IR
 
-(require syntax/parse
+(require racket/pretty
+
+         syntax/parse
+
+         picopass/logger
 
          picopass/pattern/parse
 
@@ -22,7 +26,9 @@
                   (~or * output:id))
               processor:parse-processor
               ...+)
-           #:do [(define introduce (make-syntax-introducer))
+           #:do [(log-picopass-debug "parse-pass:\n~a" 
+                                     (pretty-format (syntax->datum this-syntax)))
+                 (define introduce (make-syntax-introducer))
                  (define self-ref (introduce (datum->syntax #'name 'pass)))]
            #:attr struct (pass this-syntax
                                (attribute name)
@@ -42,6 +48,8 @@
                       output:id))
              clause:parse-processor-clause
              ...+)
+           #:do [(log-picopass-debug "parse-processor:\n~a"
+                                     (pretty-format (syntax->datum this-syntax)))]
            #:attr struct (processor this-syntax
                                     (attribute name)
                                     (attribute input)
@@ -53,7 +61,9 @@
 (define-syntax-class parse-processor-clause
   #:description "processor clause"
   (pattern ((~var pat (parse-pattern processor-clause-literal?))
-            body ...)
+            body ...+)
+           #:do [(log-picopass-debug "parse-processor-clause:\n~a"
+                                     (pretty-format (syntax->datum this-syntax)))]
            #:attr struct (processor-clause this-syntax
                                            (attribute pat.struct)
                                            (attribute body))))
