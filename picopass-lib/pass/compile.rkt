@@ -512,6 +512,12 @@
                                             #'ident+class.class)]
        [_ (pattern-stx pat)])]
 
+    [(p-literal ident)
+     (if (datum=? #'~maybe ident)
+         [with-pass-syntax pass ([~optional '~optional])
+          #'~optional]
+         (pattern-stx pat))]
+
     [_ (pattern-stx pat)]))
 
 (define (compile-clause-pattern/ident+class pass ident class)
