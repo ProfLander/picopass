@@ -14,8 +14,8 @@
 
 @defmodulelang*/no-declare[(picopass)]{
   The @racketmodname[picopass] language provides everything
-  in @racketmodname[picopass/base], as well as the @racketmodname[racket]
-  language, making it suitable for use as a language.
+  in @racketmodname[picopass/base], as well as @racketmodname[racket],
+  making it suitable for use as a language.
 }
 
 @section{Overview}
@@ -75,7 +75,7 @@ language.
                     (non-terminal (name
                                     [#:literals (literal-ident ...+)]
                                     [#:datum-literals (literal-ident ...+)]
-                                    (code:line pattern ...+)))
+                                    pattern ...+))
 
                     (non-terminal-delta (name
                                           [#:literals- (literal-ident ...+)]
@@ -93,6 +93,8 @@ language.
                              ...
                              ...+)]]
 
+@subsection{Defining a language}
+
 @racket[language-name] is the identifier bound to the language.
 
 The @racket[language] clause defines a freestanding language:
@@ -103,19 +105,7 @@ language's entry point.
 @racket[#:terminals] clause defines the set of terminals available in the
 language. Each terminal associates an identifier with a syntax class.
 
-A @racket[non-terminal] definition consists of a non-terminal name, followed by
-its literals and one @racket[pattern] for each of its productions:
-
-@racket[#:literals] declares literals that are matched by their binding in the
-surrounding definition scope.
-
-@racket[#:datum-literals] declares literals that are matched by their written
-form.
-
-@racket[pattern] can contain terminal or non-terminal identifiers, literals,
-keywords, lists of nested patterns, @racket[~maybe] whose child pattern may
-appear zero or one times, a zero-or-more repetition @racket[...], or a
-one-or-more repetition @racket[...+].
+@subsection{Extending a language}
 
 The @racket[language-delta] clause derives a language from an existing language:
 
@@ -129,6 +119,36 @@ to remove and add, respectively.
 
 @racket[-] and @racket[+] clauses specify production @racket[pattern]s to remove
 and add, respectively.
+
+@subsection{Non-terminals}
+
+A @racket[non-terminal] definition consists of a non-terminal name, followed by
+its literals and one @racket[pattern] for each of its productions:
+
+@racket[#:literals] declares literals that are matched by their binding in the
+surrounding definition scope.
+
+@racket[#:datum-literals] declares literals that are matched by their written
+form.
+
+@subsection{Non-terminal productions}
+
+The @racket[pattern] clause may contain terminal or non-terminal identifiers,
+literals, keywords, lists of nested patterns, @racket[~maybe] whose child
+pattern may appear zero or one times, a zero-or-more repetition @racket[...],
+or a one-or-more repetition @racket[...+].
+
+@subsubsection{Production ordering}
+
+During parsing, a non-terminal's @racket[pattern]s are considered
+in top-to-bottom order.
+
+This can cause a less-specific pattern (such as a terminal with the @racket[id]
+syntax class) to override a more-specific pattern (such as a literal) if they
+are otherwise structurally equivalent.
+
+Therefore, to prevent unintended mis-parses, clauses should be ordered from
+most- to least- specific.
 
 @subsection{Products of @racket[define-language]}
 
@@ -187,6 +207,7 @@ languages or arbitrary Racket values described by predicates.
                              ...
                              ...+)]]
 
+@subsection{Defining a pass}
 
 @racket[pass-name] is the identifier bound to the pass.
 
@@ -210,6 +231,8 @@ non-terminals.
 Racket values, with the former asserting the given predicate before the pass
 returns.
 
+@subsection{Processors}
+
 Each @racket[processor] defines a processor with the given
 @racket[processor-name].
 
@@ -230,8 +253,25 @@ which are validated against the outgoing language.
 @racket[predicate-ident] and @racket[*] cause the processor to return arbitrary
 Racket values, where predicates are used to assert their type.
 
+@subsubsection{Processor ordering}
+
+@racket[processor]s sharing a @racket[non-terminal-ident] input are merged at
+definition time, and considered in top-to-bottom order when parsing syntax.
+
+This can cause a processor with less-specific patterns to override one
+containing more-specific patterns if they are otherwise structurally equivalent.
+
+This is chiefly pertinent to application of the pass method,
+but - currently - also to recursion via @racket[~rec], as it operates by dispatching
+the pass over the target form, rather than invoking a specific processor.
+
+Therefore, to prevent unintended mis-parses, processors should be ordered from
+most- to least- specific.
+
+@subsection{Processor clauses}
+
 @racket[processor-clause] defines a processor which takes input in the shape
-@racket[pattern], and processes it into the processor's output using
+@racket[pattern], and transforms it into the processor's output via
 @racket[body-expr].
 
 When the input of a pass is a @racket[language-ident], @racket[pattern] acts
@@ -244,3 +284,5 @@ bodies of a @racketmodname[syntax/parse] syntax class.
 When the input of a pass is a @racket[predicate-ident] or @racket[*],
 @racket[pattern] behaves as a @racketmodname[racket/match] pattern,
 with @racket[(~rec ident)] providing equivalent behavior.
+@racket[(~maybe pattern)] is not available in this mode.
+
