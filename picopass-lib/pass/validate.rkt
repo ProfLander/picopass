@@ -6,6 +6,9 @@
 
 (require racket/list
          racket/function
+         racket/match
+
+         syntax/parse
 
          threading
 
@@ -13,6 +16,7 @@
          picopass/pattern/ir
 
          picopass/language/ir/language
+         picopass/language/ir/terminal
          picopass/language/ir/non-terminal
 
          picopass/pass/error
@@ -219,7 +223,8 @@
   "ensure SELF is a valid processor clause"
 
   (~> clause
-      (validate-processor-clause/valid-pattern pass processor _)))
+      (validate-processor-clause/valid-pattern pass processor _)
+      (validate-processor-clause/non-divergent-rec pass processor _)))
 
 (define (validate-processor-clause/valid-pattern pass processor clause)
   (-> pass? processor? processor-clause? processor-clause?)
@@ -239,4 +244,44 @@
            (pattern-stx pattern)])))
 
     clause))
+
+(define (validate-processor-clause/non-divergent-rec pass processor clause)
+  (-> pass? processor? processor-clause? processor-clause?)
+  "if the pattern of SELF names a terminal clause of its parent non-terminal,
+   ensure it does not use ~rec, as this would diverge"
+
+  (let ([pass-input (pass-input pass)])
+
+    (if (language? pass-input)
+
+        (let* ([processor-input (processor-input processor)]
+               [pattern (processor-clause-pattern clause)])
+
+          (match pattern
+
+            [(p-list stx (list (p-literal lit) (p-ident ident)))
+             #:when (datum=? #'~rec lit)
+
+             (let* ([terminals (language-terminals pass-input)]
+                    [terminal-names (map terminal-ident/name terminals)]
+                    [class (syntax-parse ident
+                             [ic:ident+class
+                              #'ic.class])])
+
+               (if (member class terminal-names datum=?)
+
+                   (let ([productions (non-terminal-productions processor-input)]
+                         [normalized (processor-clause-pattern->non-terminal-pattern
+                                       (p-ident ident))])
+
+                     (when (member normalized productions pattern=?)
+                       [raise-processor-clause-divergent-rec-error clause stx])
+
+                     clause)
+
+                   clause))]
+
+            [_ clause]))
+
+        clause)))
 
