@@ -88,6 +88,7 @@ language.
                     (pattern ident
                              literal-ident
                              keyword
+                             (~maybe pattern)
                              (pattern ...)
                              ...
                              ...+)]]
@@ -112,8 +113,9 @@ surrounding definition scope.
 form.
 
 @racket[pattern] can contain terminal or non-terminal identifiers, literals,
-keywords, lists of nested patterns, and @racket[...] (zero or more) or
-@racket[...+] (one or more) repetitions.
+keywords, lists of nested patterns, @racket[~maybe] whose child pattern may
+appear zero or one times, a zero-or-more repetition @racket[...], or a
+one-or-more repetition @racket[...+].
 
 The @racket[language-delta] clause derives a language from an existing language:
 
@@ -179,8 +181,9 @@ languages or arbitrary Racket values described by predicates.
                     (processor-clause (pattern
                                        body-expr ...+))
                     (pattern ident
-                             (~rec ident)
                              (pattern ...)
+                             (~rec ident)
+                             (~maybe pattern)
                              ...
                              ...+)]]
 
@@ -234,8 +237,9 @@ Racket values, where predicates are used to assert their type.
 When the input of a pass is a @racket[language-ident], @racket[pattern] acts
 as a subset of a @racketmodname[syntax/parse] patterns, extended with the
 cata-morphism action pattern @racket[(~rec ident)] for dispatching the pass over
-@racket[ident] before the body is evaluated, and the processor body may use
-forms from the pattern bodies of a @racketmodname[syntax/parse] syntax class.
+@racket[ident] before the body is evaluated, and the zero-or-one specifier
+@racket[(~maybe pattern)]. The processor body may use forms from the pattern
+bodies of a @racketmodname[syntax/parse] syntax class.
 
 When the input of a pass is a @racket[predicate-ident] or @racket[*],
 @racket[pattern] behaves as a @racketmodname[racket/match] pattern,
