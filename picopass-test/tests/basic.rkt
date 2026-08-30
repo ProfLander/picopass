@@ -17,9 +17,9 @@
    #:datum-literals [begin abs app]
    ident
    number
-   (begin expr ...)
-   (abs (ident ...) expr)
-   (app expr ...+))]
+   (begin ~cut expr ...)
+   (abs ~cut (ident ...) expr)
+   (app ~cut expr ...+))]
 
 (define-language-parser parse-L0 L0)
 
@@ -35,10 +35,10 @@
  #:extends L0
 
  (expr
-   (- (abs (ident ...) expr)
-      (app expr ...+))
-   (+ (abs ident expr)
-      (app expr expr)))]
+   (- (abs ~cut (ident ...) expr)
+      (app ~cut expr ...+))
+   (+ (abs ~cut ident expr)
+      (app ~cut expr expr)))]
 
 (define-language-parser parse-L1 L1)
 
@@ -50,15 +50,16 @@
 
 ; test pass for value -> value
 
-[define-pass procedure-pass
- (-> string? number?)
+(begin
+  [define-pass procedure-pass
+   (-> string? number?)
 
- [string
-  (-> string? number?)
+   [string
+    (-> string? number?)
 
-  [str (string->number str)]]]
+    [str (string->number str)]]]
 
-(printf "procedure-pass: ~a\n" (procedure-pass "1234"))
+  (printf "procedure-pass: ~a\n" (procedure-pass "1234")))
 
 ;; from-structs: arbitrary record IR to L0 syntax
 
@@ -119,7 +120,7 @@
    [expr-abs
     (-> expr expr)
 
-    [(abs ((~rec arg:ident) ...) (~rec body:expr))
+    [(abs ~cut ((~rec arg:ident) ...) (~rec body:expr))
      (for/fold ([acc (attribute body)])
                ([arg (in-list (reverse (attribute arg)))])
        #`(abs #,arg #,acc))]]
@@ -127,7 +128,7 @@
    [expr-app
     (-> expr expr)
 
-    [(app (~rec arg:expr) ...+)
+    [(app ~cut (~rec arg:expr) ...+)
      (for/fold ([acc (car (attribute arg))])
                ([arg (in-list (cdr (attribute arg)))])
        #`(app #,acc #,arg))]]]
@@ -153,14 +154,14 @@
     [number:number
      (~a (syntax-e #'number))]
 
-    [(begin (~rec body:expr) ...)
+    [(begin ~cut (~rec body:expr) ...)
      (~a (cons 'begin
                (map syntax-e (attribute body))))]
 
-    [(abs arg:ident (~rec body:expr))
+    [(abs ~cut arg:ident (~rec body:expr))
      (format "(abs ~a ~a)" (syntax-e #'arg) (syntax-e #'body))]
 
-    [(app (~rec proc:expr) (~rec arg:expr))
+    [(app ~cut (~rec proc:expr) (~rec arg:expr))
      (format "(app ~a ~a)" (syntax-e #'proc) (syntax-e #'arg))]]]
 
   (printf "L0 to source: ~a\n"

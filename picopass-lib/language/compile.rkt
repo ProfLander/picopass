@@ -155,10 +155,16 @@
              #'(~var %_ ident)]]))]
 
     [(p-literal? production)
-     (if (datum=? #'~maybe (p-literal-ident production))
-         [with-language-syntax lang ([~optional '~optional])
-          #'~optional]
-         (language-introduce-datum lang (p-literal-ident production)))]
+     (let ([ident (p-literal-ident production)])
+       (cond
+         [(datum=? #'~maybe ident)
+          [with-language-syntax lang ([~optional '~optional])
+           #'~optional]]
+         [(datum=? #'~cut ident)
+          [with-language-syntax lang ([~! '~!])
+           #'~!]]
+         [else
+          (language-introduce-datum lang ident)]))]
 
     [(p-keyword? production)
      (p-keyword-stx production)]

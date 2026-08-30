@@ -17,7 +17,8 @@
 
 (define (production-literal? stx)
   (-> syntax? boolean?)
-  (datum=? stx #'~maybe))
+  (or (datum=? stx #'~maybe)
+      (datum=? stx #'~cut)))
 
 (struct non-terminal [stx
 

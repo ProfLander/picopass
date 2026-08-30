@@ -457,10 +457,23 @@
     [(p-list stx lst)
      (let-values ([(patterns bodies)
                    (for/lists (_patterns _bodies)
-                              ([pattern (in-list lst)])
-                     (let ([clause (non-terminal-pattern->clause pass pattern)])
+                              ([pattern (in-list lst)]
+                               #:when (match pattern
+                                        [(p-literal ident)
+                                         #:when (datum=? #'~cut ident)
+                                         #f]
+                                        [else #t]))
+                     (let* ([pattern*
+                             (match pattern
+                               [(p-list (p-literal ident) pattern)
+                                #:when (datum=? #'~maybe ident)
+                                pattern]
+                               [_ pattern])]
+                            [clause
+                             (non-terminal-pattern->clause pass pattern*)])
                        (values (car clause)
                                (cdr clause))))])
+
        (cons (p-list stx patterns) (datum->syntax stx bodies)))]
 
     [(p-ident ident)
@@ -518,10 +531,14 @@
        [_ (pattern-stx pat)])]
 
     [(p-literal ident)
-     (if (datum=? #'~maybe ident)
-         [with-pass-syntax pass ([~optional '~optional])
-          #'~optional]
-         (pattern-stx pat))]
+     (cond
+       [(datum=? #'~maybe ident)
+        [with-pass-syntax pass ([~optional '~optional])
+         #'~optional]]
+       [(datum=? #'~cut ident)
+        [with-pass-syntax pass ([~! '~!])
+         #'~!]]
+       [else (pattern-stx pat)])]
 
     [_ (pattern-stx pat)]))
 
