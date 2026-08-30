@@ -161,7 +161,6 @@
 (define ((raise-missing-removed-production-error lctx) _target missing)
   (-> syntax? (-> (listof any/c) (listof any/c) none/c))
 
-  (printf "missing: ~s\n" missing)
   (raise-syntax-error 'extend-non-terminal
                       "removed production missing from base language"
                       lctx
