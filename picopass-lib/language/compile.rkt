@@ -62,21 +62,14 @@
   (-> language? terminal? syntax?)
   "compile TERMINAL to syntax in context of LANGUAGE"
 
-  (let* ([name (terminal-name terminal)]
-         [description (format "~a ~a" (language-name language) name)])
+  [with-language-syntax language ([define-syntax 'define-syntax]
+                                  [class (terminal-class terminal)])
 
-    [with-language-syntax language ([define-syntax-class
-                                     'define-syntax-class]
-                                    [pattern 'pattern]
-                                    [~var '~var]
-                                    [description description]
-                                    [class (terminal-class terminal)])
+   [with-language-bindings language ([class-name (terminal-name terminal)])
 
-     [with-language-bindings language ([class-name name])
+    (with-syntax ([class (make-rename-transformer #'class)])
 
-      #'(define-syntax-class class-name
-          #:description description
-          (pattern (~var _ class)))]]))
+      #`(define-syntax class-name class))]])
 
 (define (compile-non-terminal language non-terminal)
   (-> language? non-terminal? syntax?)
