@@ -57,6 +57,7 @@
 
 (define (p-keyword-symbol self)
   (-> p-keyword? keyword?)
+  #:trace #f
   (syntax-e (p-keyword-stx self)))
 
 ; List
