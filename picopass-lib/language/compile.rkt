@@ -88,12 +88,12 @@
          [literals
           (for/list ([literal (in-list (non-terminal-literals
                                          non-terminal))])
-            (language-introduce-datum language literal))]
+            (language-introduce-datum language (syntax->datum literal)))]
 
          [datum-literals
           (for/list ([datum-literal (in-list (non-terminal-datum-literals
                                                non-terminal))])
-            (language-introduce-datum language datum-literal))]
+            (language-introduce-datum language (syntax->datum datum-literal)))]
 
          [productions
           (for/list ([production (in-list (non-terminal-productions
