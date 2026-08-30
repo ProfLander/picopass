@@ -17,14 +17,14 @@
    #:datum-literals [begin abs app]
    ident
    number
-   (begin ~cut expr ...)
+   (begin ~cut (~maybe #:body) expr ...)
    (abs ~cut (ident ...) expr)
    (app ~cut expr ...+))]
 
 (define-language-parser parse-L0 L0)
 
 (printf "parsed L0: ~a\n"
-        (~> #'(begin (app (abs (x y) x) 1234 5678))
+        (~> #'(begin #:body (app (abs (x y) x) 1234 5678))
             (parse-L0)
             (syntax->datum)
             (pretty-format)))
@@ -43,7 +43,7 @@
 (define-language-parser parse-L1 L1)
 
 (printf "parsed L1: ~a\n"
-        (~> #'(begin (app (app (abs x (abs y x)) 1234) 5678))
+        (~> #'(begin #:body (app (app (abs x (abs y x)) 1234) 5678))
             (parse-L1)
             (syntax->datum)
             (pretty-format)))
@@ -134,7 +134,7 @@
        #`(app #,acc #,arg))]]]
 
   (printf "L0 to L1: ~a\n"
-          (~> #'(begin (app (abs (x y) x) 1234 5678))
+          (~> #'(begin #:body (app (abs (x y) x) 1234 5678))
               (unary-lambda)
               (syntax->datum)
               (pretty-format))))
@@ -154,7 +154,7 @@
     [number:number
      (~a (syntax-e #'number))]
 
-    [(begin ~cut (~rec body:expr) ...)
+    [(begin ~cut (~maybe #:body) (~rec body:expr) ...)
      (~a (cons 'begin
                (map syntax-e (attribute body))))]
 
@@ -165,7 +165,7 @@
      (format "(app ~a ~a)" (syntax-e #'proc) (syntax-e #'arg))]]]
 
   (printf "L0 to source: ~a\n"
-          (~> #'(begin (app (abs (x y) x) 1234 5678))
+          (~> #'(begin #:body (app (abs (x y) x) 1234 5678))
               (unary-lambda)
               (to-source)
               (pretty-format))))

@@ -453,56 +453,65 @@
   "convert the non-terminal pattern PAT into a processor clause
    in the context of PASS"
 
-  (match pat
-    [(p-list stx lst)
-     (let-values ([(patterns bodies)
-                   (for/lists (_patterns _bodies)
-                              ([pattern (in-list lst)]
-                               #:when (match pattern
-                                        [(p-literal ident)
-                                         #:when (datum=? #'~cut ident)
-                                         #f]
-                                        [else #t]))
-                     (let* ([pattern*
-                             (match pattern
-                               [(p-list (p-literal ident) pattern)
-                                #:when (datum=? #'~maybe ident)
-                                pattern]
-                               [_ pattern])]
-                            [clause
-                             (non-terminal-pattern->clause pass pattern*)])
-                       (values (car clause)
-                               (cdr clause))))])
+  (let ([lctx (pass-context pass)])
+    (match pat
+      [(p-list stx lst)
+       (let-values
+         ([(patterns bodies)
+           (for/lists (_patterns _bodies)
+                      ([pattern (in-list lst)]
+                       #:when (match pattern
+                                [(p-literal ident)
+                                 #:when (datum=? #'~cut ident)
+                                 #f]
+                                [_ #t]))
+             (match pattern
+               [(p-list _stx (list (p-literal lit) pattern*))
+                #:when (datum=? #'~maybe lit)
+                (let ([clause (non-terminal-pattern->clause pass pattern*)])
+                  [with-pass-syntax pass ([~? '~?]
+                                          [~and '~and]
+                                          [~optional '~optional]
+                                          [tmp (generate-temporary)])
+                   (values (p-list lctx
+                                   (list (p-literal #'~optional)
+                                         (p-list lctx
+                                                 (list (p-literal #'~and)
+                                                       (p-ident #'tmp)
+                                                       (car clause)))))
+                           #'(~? tmp))])]
+               [_ (let ([clause (non-terminal-pattern->clause pass pattern)])
+                    (values (car clause)
+                            (cdr clause)))]))])
 
-       (cons (p-list stx patterns) (datum->syntax stx bodies)))]
+         (cons (p-list stx patterns) (datum->syntax stx bodies)))]
 
-    [(p-ident ident)
-     (let* ([lctx (pass-context pass)]
-            [input (pass-input pass)]
-            [terminals (language-terminals input)])
+      [(p-ident ident)
+       (let* ([input (pass-input pass)]
+              [terminals (language-terminals input)])
 
-       (if (findf (λ (terminal)
-                    (datum=? (terminal-ident/name terminal) ident))
-                  terminals)
+         (if (findf (λ (terminal)
+                      (datum=? (terminal-ident/name terminal) ident))
+                    terminals)
 
-           (cons (p-ident (format-id lctx "~a:~a" ident ident))
-                 (format-id lctx "~a" ident))
+             (cons (p-ident (format-id lctx "~a:~a" ident ident))
+                   (format-id lctx "~a" ident))
 
-           (let* ([tmp (format-id lctx "~a" (generate-temporary ident))]
-                  [ident (format-id lctx "~a:~a" tmp ident)])
-             (cons (p-list ident
-                           (list (p-literal #'~rec)
-                                 (p-ident ident)))
-                   tmp))))]
+             (let* ([tmp (format-id lctx "~a" (generate-temporary ident))]
+                    [ident (format-id lctx "~a:~a" tmp ident)])
+               (cons (p-list ident
+                             (list (p-literal #'~rec)
+                                   (p-ident ident)))
+                     tmp))))]
 
-    [(p-keyword stx)
-     (cons (p-keyword stx) stx)]
+      [(p-keyword stx)
+       (cons (p-keyword stx) stx)]
 
-    [(p-literal ident)
-     (cons (p-ident ident) ident)]
+      [(p-literal ident)
+       (cons (p-ident ident) ident)]
 
-    [(p-repeat stx min)
-     (cons (p-repeat stx 0) (datum->pass-syntax pass '...))]))
+      [(p-repeat stx min)
+       (cons (p-repeat stx 0) (datum->pass-syntax pass '...))])))
 
 ; Processor clause
 
