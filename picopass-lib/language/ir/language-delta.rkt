@@ -25,6 +25,7 @@
 (struct language-delta [stx
                         ident
                         entry-point-ident
+                        description
                         delta-terminals
                         non-terminals]
 
@@ -37,6 +38,7 @@
                                         (language-delta-entry-point-ident self)])
                                    (and entry-point
                                         (syntax->datum entry-point))))
+                           (cons 'description (language-description self))
                            (cons 'delta-terminals (language-delta-delta-terminals self))
                            (cons 'non-terminals (language-delta-non-terminals self)))
                      port))])
@@ -94,6 +96,9 @@
          [entry-point (or (language-delta-entry-point-ident delta)
                           (language-entry-point-ident base))]
 
+         [description (or (language-delta-description delta)
+                          (language-description base))]
+
          [terminals (language-terminals base)]
          [delta-terminals (language-delta-delta-terminals delta)]
          [terminals (apply-delta delta-terminals terminals
@@ -109,6 +114,7 @@
     (language stx
               ident
               entry-point
+              description
               terminals
               non-terminals
               (make-syntax-introducer))))

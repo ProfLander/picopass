@@ -20,6 +20,7 @@
 
 (struct non-terminal-delta [stx
                             ident/name
+                            description
                             delta-literals
                             delta-datum-literals
                             delta-productions]
@@ -30,6 +31,8 @@
                        (list 'non-terminal-delta
                              (list 'name
                                    (non-terminal-delta-ident/name self))
+                             (list 'description
+                                   (non-terminal-delta-description self))
                              (cons 'delta-literals
                                    (non-terminal-delta-delta-literals self))
                              (cons 'delta-datum-literals
@@ -49,11 +52,13 @@
 
           (for/list ([ext (in-list delta)])
             (let* ([ident/name (non-terminal-delta-ident/name ext)]
+                   [description (non-terminal-delta-description ext)]
                    [target (or (findf (compose (curry datum=? ident/name)
                                                non-terminal-ident)
                                       base)
                                (non-terminal ext
                                              ident/name
+                                             description
                                              null
                                              null
                                              null))])
@@ -63,7 +68,9 @@
   (-> non-terminal? non-terminal-delta? non-terminal?)
   "extend BASE with the removals and additions in DELTA"
 
-  (let* ([literals (non-terminal-literals base)]
+  (let* ([description (or (non-terminal-delta-description delta) 
+                          (non-terminal-description base))]
+         [literals (non-terminal-literals base)]
          [delta-literals (non-terminal-delta-delta-literals delta)]
          [literals (delta-add delta-literals literals)]
 
@@ -96,6 +103,7 @@
 
     (non-terminal (non-terminal-stx base)
                   (non-terminal-ident base)
+                  description
                   literals
                   datum-literals
                   productions)))

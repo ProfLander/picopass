@@ -23,6 +23,7 @@
 (struct non-terminal [stx
 
                       ident
+                      description
 
                       literals
                       datum-literals
@@ -35,6 +36,8 @@
                 (list 'non-terminal
                       (list 'name
                             (non-terminal-name self))
+                      (list 'description
+                            (non-terminal-description self))
                       (cons 'literals
                             (non-terminal-literal-names self))
                       (cons 'datum-literals

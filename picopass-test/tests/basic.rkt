@@ -10,11 +10,13 @@
 (begin
   [define-language L0
    #:entry-point expr
+   #:description "n-ary lambda"
 
    #:terminals ([ident id]
                 [number number])
 
    (expr
+     #:description "expression"
      #:datum-literals [begin abs app]
      ident
      number
@@ -35,6 +37,7 @@
 (begin
   [define-language L1
    #:extends L0
+   #:description "unary lambda"
 
    (expr
      (- (abs ~cut (ident ...) expr)

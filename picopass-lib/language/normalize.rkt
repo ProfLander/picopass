@@ -22,12 +22,14 @@
          [scope (language-scope self)]
          [ident (language-ident self)]
          [entry-point-ident (language-entry-point-ident self)]
+         [description (language-description self)]
          [terminals (language-terminals self)]
          [non-terminals (map normalize-non-terminal
                              (language-non-terminals self))])
     (language stx
               ident
               entry-point-ident
+              description
               terminals
               non-terminals
               scope)))
@@ -38,6 +40,7 @@
 
   (let* ([stx (non-terminal-stx self)]
          [ident (non-terminal-ident self)]
+         [description (non-terminal-description self)]
          [literals (non-terminal-literals self)]
          [datum-literals (non-terminal-datum-literals self)]
          [productions (map (curryr normalize-pattern
@@ -46,6 +49,7 @@
 
     (non-terminal stx
                   ident
+                  description
                   literals
                   datum-literals
                   productions)))
