@@ -74,25 +74,15 @@
   "compile syntax-parse dispatch for PASS to syntax"
 
   (let* ([input (pass-input pass)]
-         [input-idents
-          (remove-duplicates
-            (for/list ([processor (in-list (pass-processors pass))])
-              (non-terminal-ident (processor-input processor)))
-            datum=?)])
+         [entry-point-ident (language-entry-point-ident input)])
 
-    (let-values ([(non-terminal-idents pass-idents)
-                  (for/lists (_non-terminal-idents _pass-idents)
-                             ([ident (in-list input-idents)])
-                    (values (language-introduce input ident)
-                            (pass-introduce pass ident)))])
-
-      (with-syntax ([(non-terminal-ident ...) non-terminal-idents]
-                    [(pass-ident ...) pass-idents])
-
-        #`(syntax-parser
-            [(~var prod non-terminal-ident)
-             (pass-ident (attribute prod))]
-            ...)))))
+    (with-syntax ([non-terminal-ident
+                   (language-introduce input entry-point-ident)]
+                  [pass-ident
+                   (pass-introduce pass entry-point-ident)])
+      #'(syntax-parser
+          [(~var prod non-terminal-ident)
+           (pass-ident (attribute prod))]))))
 
 (define (compile-pass-dispatch/match pass)
   (-> pass? syntax?)
@@ -115,8 +105,8 @@
             ...
             [else
              (raise-pass-dispatch-error
-                   (quote pass-name)
-                   in)])))))
+               (quote pass-name)
+               in)])))))
 
 (define (compile-pass-entry-point pass)
   (-> pass? syntax?)
@@ -147,9 +137,9 @@
              #`(let ([result #,pass-call])
                  (unless (#,output result)
                    (raise-pass-output-predicate-error
-                         (quote #,pass-ident)
-                         (quote #,output)
-                         result))
+                     (quote #,pass-ident)
+                     (quote #,output)
+                     result))
                  result)])])
 
     #`(define (#,pass-ident #,entry-input)
@@ -157,57 +147,69 @@
 
 ; Input handlers (aggregated processors)
 
+(struct input-handler [ident processors]
+  #:transparent)
+
+(define (make-input-handler ident)
+  (-> syntax? input-handler?)
+  (input-handler ident null))
+
+(define (input-handler-with-processor handler processor)
+  (-> input-handler? processor? input-handler?)
+  (let ([ident (input-handler-ident handler)]
+        [processors (input-handler-processors handler)])
+
+    (input-handler ident
+                   (append processors (list processor)))))
+
 (define (compile-pass-input-handlers pass)
   (-> pass? syntax?)
   "compile the input handlers for PASS to syntax"
 
-  (let* ([processors (pass-processors pass)]
-         [pass-input (pass-input pass)]
-         [clause-pairs
-          (for/fold ([clause-pairs (hash)])
+  (let* ([pass-input (pass-input pass)]
+         [processors (pass-processors pass)]
+         [unique-input-idents (remove-duplicates
+                                (map processor-input-ident processors)
+                                datum=?)]
+
+         [input-handlers (map make-input-handler unique-input-idents)]
+
+         [input-handlers
+          (for/fold ([input-handlers input-handlers])
                     ([processor (in-list processors)])
+            (let ([index [index-where input-handlers
+                          (λ (input-handler)
+                            (datum=? (input-handler-ident input-handler)
+                                     (processor-input-ident processor)))]])
+              (let ([input-handler (list-ref input-handlers index)])
+                (list-set input-handlers index
+                          (input-handler-with-processor input-handler
+                                                        processor)))))])
 
-            (let* ([input (processor-input processor)]
-
-                   [input-key
-                    (if (non-terminal? input)
-                        (non-terminal-name input)
-                        (syntax-e input))]
-
-                   [proc-clauses (processor-clauses processor)]
-                   [proc-output (processor-output processor)]
-                   [pairs (for/list ([clause (in-list proc-clauses)])
-                            (cons clause proc-output))])
-
-              (hash-set clause-pairs input-key
-                        (if (hash-has-key? clause-pairs input-key)
-                            (append (hash-ref clause-pairs input-key) pairs)
-                            pairs))))])
-
-    (let ([syntax-input (language? pass-input)])
-      [datum->syntax (pass-stx pass)
-       (for/list ([target (in-list (if syntax-input
-                                       (language-non-terminals pass-input)
-                                       processors))])
-
-         (let* ([pair (hash-ref clause-pairs
-                                (if syntax-input
-                                    (non-terminal-name target)
-                                    (syntax-e (processor-input target)))
-                                null)]
-                [clauses (map car pair)]
-                [output-classes (map cdr pair)])
-
+    [datum->syntax (pass-stx pass)
+     (for/list ([input-handler (in-list input-handlers)])
+       (let-values ([(clauses outputs)
+                     (for/fold ([clauses null]
+                                [outputs null])
+                               ([processor (in-list (input-handler-processors
+                                                      input-handler))])
+                       (let* ([proc-clauses (processor-clauses processor)]
+                              [proc-outputs (map (const (processor-output processor))
+                                                 proc-clauses)])
+                         (values (append clauses proc-clauses)
+                                 (append outputs proc-outputs))))])
+         (let* ([syntax-input (language? pass-input)]
+                [input-ident (input-handler-ident input-handler)])
            ((if syntax-input
                 compile-pass-input-handler/syntax-parse
                 compile-pass-input-handler/match)
-            pass target
-            clauses output-classes)))])))
+            pass input-ident
+            clauses outputs))))]))
 
-(define (compile-pass-input-handler/syntax-parse pass non-terminal
+(define (compile-pass-input-handler/syntax-parse pass input-ident
                                                  clauses outputs)
   (-> pass?
-      non-terminal?
+      syntax?
       (listof processor-clause?)
       (or/c (listof non-terminal?)
             (listof syntax?))
@@ -216,8 +218,11 @@
   "compile the input handler corresponding to NON-TERMINAL
    to syntax-parse syntax using CLAUSES with OUTPUTS in context of PASS"
 
-  (let* ([auto-generate (and (language? (pass-input pass))
-                             (language? (pass-output pass)))]
+  (let* ([non-terminal (findf (λ (nt)
+                                (datum=? input-ident
+                                         (non-terminal-ident nt)))
+                              (language-non-terminals (pass-input pass)))]
+         [auto-generate (language? (pass-output pass))]
          [undefined (if auto-generate
                         (generate-undefined-clauses pass clauses non-terminal)
                         null)]
@@ -245,8 +250,7 @@
           (for/list ([name (non-terminal-datum-literal-names non-terminal)])
             (datum->pass-syntax pass name))])
 
-    [with-pass-bindings pass ([input-handler-ident
-                               (non-terminal-ident non-terminal)])
+    [with-pass-bindings pass ([input-ident input-ident])
 
      (with-syntax* ([pass-ident (pass-ident pass)]
                     [pass-ref (pass-self-ref pass)]
@@ -262,20 +266,19 @@
                                    clauses
                                    outputs]])
 
-       #'(define input-handler-ident
-           (let ([pass-ident pass-ref])
-             (syntax-parser
-               literal
-               ...
-               datum-literal
-               ...
-               clause
-               ...))))]))
+       #'(define input-ident
+           (syntax-parser
+             literal
+             ...
+             datum-literal
+             ...
+             clause
+             ...)))]))
 
-(define (compile-pass-input-handler/match pass processor
+(define (compile-pass-input-handler/match pass input-ident
                                           clauses outputs)
   (-> pass?
-      processor?
+      syntax?
       (listof processor-clause?)
       (or/c (listof non-terminal?)
             (listof syntax?))
@@ -283,7 +286,11 @@
   "compile the input handler corresponding to PROCESSOR
    to match syntax using CLAUSES with OUTPUTS in context of PASS"
 
-  (let* ([pass-output (pass-output pass)]
+  (let* ([processor (findf (λ (processor)
+                             (datum=? input-ident
+                                      (processor-input processor)))
+                           (pass-processors pass))]
+         [pass-output (pass-output pass)]
          [outputs
           (for/list ([output (in-list outputs)])
             (if (non-terminal? output)
@@ -291,7 +298,7 @@
                  (non-terminal-ident output)]
                 output))])
 
-    [with-pass-bindings pass ([input-handler-ident (processor-input processor)])
+    [with-pass-bindings pass ([input-ident input-ident])
 
      (with-syntax ([pass-ident (pass-ident pass)]
                    [pass-ref (pass-self-ref pass)]
@@ -299,11 +306,10 @@
                                   clauses
                                   outputs]])
 
-       #'(define (input-handler-ident val)
-           (let ([pass-ident pass-ref])
-             (match val
-               clause
-               ...))))]))
+       #'(define (input-ident val)
+           (match val
+             clause
+             ...)))]))
 
 ; Processor clause
 
@@ -353,10 +359,10 @@
              #`((let ([result clause-tail])
                   (unless (output-class result)
                     (raise-processor-output-predicate-error
-                          (quote pass-name)
-                          (quote output-class)
-                          clause-pattern-string
-                          result))
+                      (quote pass-name)
+                      (quote output-class)
+                      clause-pattern-string
+                      result))
                   result)
                 ...))])])
 
@@ -524,22 +530,18 @@
 
   (define-values (ident class) (split-ident+class ident+class))
 
-  (with-syntax ([ident (datum->pass-syntax pass ident)]
+  (let ([lang (pass-input pass)])
+    (with-syntax ([ident (datum->pass-syntax pass ident)]
 
-                [temp-ident
-                 (format-id #'pat "~a" (generate-temporary #'ident))]
+                  [temp-ident
+                   (format-id #'pat "~a" (generate-temporary #'ident))]
 
-                [class
-                 (let ([input (pass-input pass)])
-                   (if (language? input)
-                       [language-introduce input
-                        (datum->pass-syntax pass class)]
-                       class))]
+                  [class/language [language-introduce lang class]]
 
-                [pass-ref (pass-self-ref pass)])
+                  [class/pass [pass-introduce pass class]])
 
-    #`(~and (~var temp-ident class)
-            (~parse ident (pass-ref (attribute temp-ident))))))
+      #`(~and (~var temp-ident class/language)
+              (~parse ident (class/pass (attribute temp-ident)))))))
 
 (define (compile-clause-pattern/match-rec pass ident)
   (-> pass? syntax? syntax?)

@@ -253,21 +253,6 @@ which are validated against the outgoing language.
 @racket[predicate-ident] and @racket[*] cause the processor to return arbitrary
 Racket values, where predicates are used to assert their type.
 
-@subsubsection{Processor ordering}
-
-@racket[processor]s sharing a @racket[non-terminal-ident] input are merged at
-definition time, and considered in top-to-bottom order when parsing syntax.
-
-This can cause a processor with less-specific patterns to override one
-containing more-specific patterns if they are otherwise structurally equivalent.
-
-This is chiefly pertinent to application of the pass method,
-but - currently - also to recursion via @racket[~rec], as it operates by dispatching
-the pass over the target form, rather than invoking a specific processor.
-
-Therefore, to prevent unintended mis-parses, processors should be ordered from
-most- to least- specific.
-
 @subsection{Processor clauses}
 
 @racket[processor-clause] defines a processor which takes input in the shape
@@ -276,13 +261,43 @@ most- to least- specific.
 
 When the input of a pass is a @racket[language-ident], @racket[pattern] acts
 as a subset of a @racketmodname[syntax/parse] patterns, extended with the
-cata-morphism action pattern @racket[(~rec ident)] for dispatching the pass over
-@racket[ident] before the body is evaluated, and the zero-or-one specifier
+cata-morphism action pattern @racket[(~rec ident)], and the zero-or-one specifier
 @racket[(~maybe pattern)]. The processor body may use forms from the pattern
 bodies of a @racketmodname[syntax/parse] syntax class.
 
 When the input of a pass is a @racket[predicate-ident] or @racket[*],
 @racket[pattern] behaves as a @racketmodname[racket/match] pattern,
-with @racket[(~rec ident)] providing equivalent behavior.
+extended with the @racket[(~rec ident)] special pattern.
 @racket[(~maybe pattern)] is not available in this mode.
 
+@subsubsection{Cata-morphisms}
+
+@racket[(~rec ident)] encodes a cata-morphism, enabling implicit recursive
+syntax traversal.
+
+When a pass' input is a language, @racket[~rec] may only be called on its
+non-terminals, and will directly invoke the corresponding parser before
+evaluating the clause body. This results in a traversal order equivalent to that
+of the corresponding language parser.
+
+When a pass' input is a value, @racket[~rec] may be called on arbitrary pattern
+terms, and will invoke the pass' top-level parser dispatch before evaluating the
+clause body.
+
+See @secref["processor-and-clause-ordering"] for limitations on dispatching
+passes over arbitrary values.
+
+@subsubsection[#:tag "processor-and-clause-ordering"]{Processor and clause ordering}
+
+@racket[processor]s sharing an input are merged at definition time, and
+their clauses considered in top-to-bottom order when parsing syntax.
+
+This can cause a clause with less-specific patterns to override one
+containing more-specific patterns if they are otherwise structurally equivalent.
+
+Therefore, to prevent unintended mis-parses, processors and their clauses should
+be ordered from most- to least- specific.
+
+This is particularly relevant when a pass' input is a value, as the lack of a
+prescribed specification requires each processor be tried in order when
+dispatching a pass over input, thus increasing the risk of parse ambiguity.

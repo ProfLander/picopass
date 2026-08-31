@@ -115,9 +115,9 @@
            lang-name)
    pattern])
 
-(define (raise-processor-clause-divergent-rec-error self pattern)
+(define (raise-processor-clause-terminal-rec-error self pattern)
   (-> processor-clause? syntax? none/c)
   [raise-processor-clause-error self
-   "use of ~rec would diverge"
+   "~rec may not be called on a terminal"
    pattern])
 
