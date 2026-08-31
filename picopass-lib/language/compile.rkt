@@ -2,7 +2,12 @@
 
 ; Language compilation pipeline
 
-(require racket/syntax
+(require (for-template racket/base
+                       racket/pretty
+                       syntax/parse
+                       picopass/logger)
+
+         racket/syntax
 
          threading
 
@@ -19,51 +24,43 @@
 (define (compile-language language)
   (-> language? syntax?)
   "compile LANGUAGE to syntax"
-  [with-language-syntax language ([begin 'begin]
-                                  [define-syntax 'define-syntax])
+  (with-syntax* ([ident (language-ident language)]
 
-   (with-syntax* ([ident (language-ident language)]
+                 [(terminal ...)
+                  (for/list ([terminal (in-list (language-terminals language))])
+                    (compile-terminal language terminal))]
 
-                  [(terminal ...)
-                   (for/list ([terminal (in-list (language-terminals language))])
-                     (compile-terminal language terminal))]
+                 [(non-terminal ...)
+                  (for/list ([non-terminal (in-list (language-non-terminals language))])
+                    (compile-non-terminal language non-terminal))])
 
-                  [(non-terminal ...)
-                   (for/list ([non-terminal (in-list (language-non-terminals language))])
-                     (compile-non-terminal language non-terminal))])
+    #`(begin
 
-     #`(begin
+        (define-syntax ident
+          #,language)
 
-         (define-syntax ident
-           #,language)
+        terminal
+        ...
 
-         terminal
-         ...
-
-         non-terminal
-         ...))])
+        non-terminal
+        ...)))
 
 (define (compile-language-parser name language)
   (-> syntax? language? syntax?)
   "compile the parser for LANGUAGE to syntax"
-  [with-language-syntax language ([define 'define]
-                                  [syntax-parser 'syntax-parser]
-                                  [~var '~var]
-                                  [this-syntax 'this-syntax])
-   [with-language-bindings language ([entry-point
-                                      (language-entry-point-ident language)])
-    (with-syntax* ([name name])
-      #`(define name
-          (syntax-parser
-            [(~var _ entry-point)
-             this-syntax])))]])
+  [with-language-bindings language ([entry-point
+                                     (language-entry-point-ident language)])
+   (with-syntax* ([name name])
+     #`(define name
+         (syntax-parser
+           [(~var _ entry-point)
+            this-syntax])))])
 
 (define (compile-terminal language terminal)
   (-> language? terminal? syntax?)
   "compile TERMINAL to syntax in context of LANGUAGE"
 
-  [with-language-syntax language ([define-syntax 'define-syntax]
-                                  [class (terminal-class terminal)])
+  [with-language-syntax language ([class (terminal-class terminal)])
 
    [with-language-bindings language ([class-name (terminal-name terminal)])
 
@@ -93,17 +90,8 @@
                                             non-terminal))])
             (compile-production language non-terminal production))])
 
-    [with-language-syntax language ([define-syntax-class 'define-syntax-class]
-                                    [pattern 'pattern]
-                                    [description
-                                     (format "~a ~a" language-name name)]
-                                    [log-picopass-debug 'log-picopass-debug]
-                                    [%datum '#%datum]
-                                    [%app '#%app]
-                                    [pretty-format 'pretty-format]
-                                    [syntax->datum 'syntax->datum]
-                                    [this-syntax 'this-syntax]
-                                    [quote 'quote])
+    [with-language-syntax language ([description
+                                     (format "~a ~a" language-name name)])
 
      [with-language-bindings language ([class-name name])
 
@@ -124,10 +112,10 @@
             datum-literal
             ...
             (pattern production
-                     #:do ([log-picopass-debug (%datum . "parse ~a:\n~a")
+                     #:do ([log-picopass-debug "parse ~a:\n~a"
                             description
-                            (%app pretty-format (%app syntax->datum this-syntax)
-                                  #:mode 'display)]))
+                            (pretty-format (syntax->datum this-syntax)
+                                           #:mode 'display)]))
             ...))]]))
 
 (define (compile-production lang non-terminal production)
@@ -142,20 +130,16 @@
        (if (or (member ident literals datum=?)
                (member ident datum-literals datum=?))
            ident
-           [with-language-syntax lang ([~var '~var]
-                                       [%_ '_])
-            [with-language-bindings lang ([ident ident])
-             #'(~var %_ ident)]]))]
+           [with-language-bindings lang ([ident ident])
+            #'(~var _ ident)]))]
 
     [(p-literal? production)
      (let ([ident (p-literal-ident production)])
        (cond
          [(datum=? #'~maybe ident)
-          [with-language-syntax lang ([~optional '~optional])
-           #'~optional]]
+          #'~optional]
          [(datum=? #'~cut ident)
-          [with-language-syntax lang ([~! '~!])
-           #'~!]]
+          #'~!]
          [else
           (language-introduce-datum lang ident)]))]
 
