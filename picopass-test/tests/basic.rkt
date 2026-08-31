@@ -7,46 +7,48 @@
 
 ;; L0: Lambda calculus with n-ary abs / app
 
-[define-language L0
- #:entry-point expr
+(begin
+  [define-language L0
+   #:entry-point expr
 
- #:terminals ([ident id]
-              [number number])
+   #:terminals ([ident id]
+                [number number])
 
- (expr
-   #:datum-literals [begin abs app]
-   ident
-   number
-   (begin ~cut (~maybe #:body) expr ...)
-   (abs ~cut (ident ...) expr)
-   (app ~cut expr ...+))]
+   (expr
+     #:datum-literals [begin abs app]
+     ident
+     number
+     (begin ~cut (~maybe #:body) expr ...)
+     (abs ~cut (ident ...) expr)
+     (app ~cut expr ...+))]
 
-(define-language-parser parse-L0 L0)
+  (define-language-parser parse-L0 L0)
 
-(printf "parsed L0: ~a\n"
-        (~> #'(begin #:body (app (abs (x y) x) 1234 5678))
-            (parse-L0)
-            (syntax->datum)
-            (pretty-format)))
+  (printf "parsed L0: ~a\n"
+          (~> #'(begin #:body (app (abs (x y) x) 1234 5678))
+              (parse-L0)
+              (syntax->datum)
+              (pretty-format))))
 
 ;; L1: Lambda calculus with unary abs / app
 
-[define-language L1
- #:extends L0
+(begin
+  [define-language L1
+   #:extends L0
 
- (expr
-   (- (abs ~cut (ident ...) expr)
-      (app ~cut expr ...+))
-   (+ (abs ~cut ident expr)
-      (app ~cut expr expr)))]
+   (expr
+     (- (abs ~cut (ident ...) expr)
+        (app ~cut expr ...+))
+     (+ (abs ~cut ident expr)
+        (app ~cut expr expr)))]
 
-(define-language-parser parse-L1 L1)
+  (define-language-parser parse-L1 L1)
 
-(printf "parsed L1: ~a\n"
-        (~> #'(begin #:body (app (app (abs x (abs y x)) 1234) 5678))
-            (parse-L1)
-            (syntax->datum)
-            (pretty-format)))
+  (printf "parsed L1: ~a\n"
+          (~> #'(begin #:body (app (app (abs x (abs y x)) 1234) 5678))
+              (parse-L1)
+              (syntax->datum)
+              (pretty-format))))
 
 ; test pass for value -> value
 
@@ -120,7 +122,7 @@
    [expr-abs
     (-> expr expr)
 
-    [(abs ~cut ((~rec arg:ident) ...) (~rec body:expr))
+    [(abs ~cut (arg:ident ...) (~rec body:expr))
      (for/fold ([acc (attribute body)])
                ([arg (in-list (reverse (attribute arg)))])
        #`(abs #,arg #,acc))]]

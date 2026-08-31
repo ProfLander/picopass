@@ -224,7 +224,7 @@
 
   (~> clause
       (validate-processor-clause/valid-pattern pass processor _)
-      (validate-processor-clause/non-divergent-rec pass processor _)))
+      (validate-processor-clause/no-terminal-rec pass processor _)))
 
 (define (validate-processor-clause/valid-pattern pass processor clause)
   (-> pass? processor? processor-clause? processor-clause?)
@@ -245,7 +245,7 @@
 
     clause))
 
-(define (validate-processor-clause/non-divergent-rec pass processor clause)
+(define (validate-processor-clause/no-terminal-rec pass processor clause)
   (-> pass? processor? processor-clause? processor-clause?)
   "if the pattern of SELF names a terminal clause of its parent non-terminal,
    ensure it does not use ~rec, as this would diverge"
@@ -270,14 +270,7 @@
 
                (if (member class terminal-names datum=?)
 
-                   (let ([productions (non-terminal-productions processor-input)]
-                         [normalized (processor-clause-pattern->non-terminal-pattern
-                                       (p-ident ident))])
-
-                     (when (member normalized productions pattern=?)
-                       [raise-processor-clause-divergent-rec-error clause stx])
-
-                     clause)
+                   [raise-processor-clause-terminal-rec-error clause stx]
 
                    clause))]
 
