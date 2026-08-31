@@ -60,11 +60,13 @@ language.
 
                     (language (code:line
                                 #:entry-point non-terminal-ident
+                                [#:description description-string]
                                 [#:terminals (terminal ...)]
                                 non-terminal ...+))
 
                     (language-delta (code:line
                                       #:extends extends-ident
+                                      [#:description description-string]
                                       [#:entry-point non-terminal-ident]
                                       [#:terminals- (terminal ...+)]
                                       [#:terminals+ (terminal ...+)]
@@ -73,11 +75,13 @@ language.
                     (terminal (name syntax-class))
 
                     (non-terminal (name
+                                    [#:description description-string]
                                     [#:literals (literal-ident ...+)]
                                     [#:datum-literals (literal-ident ...+)]
                                     pattern ...+))
 
                     (non-terminal-delta (name
+                                          [#:description description-string]
                                           [#:literals- (literal-ident ...+)]
                                           [#:literals+ (literal-ident ...+)]
                                           [#:datum-literals- (literal-ident ...+)]
@@ -102,6 +106,9 @@ The @racket[language] clause defines a freestanding language:
 @racket[#:entry-point] specifies the non-terminal used as the
 language's entry point.
 
+@racket[#:description] overrides the language's generated description when
+reporting parse errors.
+
 @racket[#:terminals] clause defines the set of terminals available in the
 language. Each terminal associates an identifier with a syntax class.
 
@@ -110,6 +117,8 @@ language. Each terminal associates an identifier with a syntax class.
 The @racket[language-delta] clause derives a language from an existing language:
 
 @racket[#:extends] specifies the language to use as a base.
+
+@racket[#:description] overrides the base language's description.
 
 @racket[#:literals-] and @racket[#:literals+] specify literals to remove and
 add, respectively.
@@ -124,6 +133,9 @@ and add, respectively.
 
 A @racket[non-terminal] definition consists of a non-terminal name, followed by
 its literals and one @racket[pattern] for each of its productions:
+
+@racket[#:description] overrides the non-terminal's generated description when
+reporting parse errors.
 
 @racket[#:literals] declares literals that are matched by their binding in the
 surrounding definition scope.

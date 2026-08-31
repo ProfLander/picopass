@@ -90,8 +90,13 @@
                                             non-terminal))])
             (compile-production language non-terminal production))])
 
-    [with-language-syntax language ([description
-                                     (format "~a ~a" language-name name)])
+    [with-language-syntax language
+     ([description
+       (format "~a ~a"
+               (or (language-description language)
+                   language-name)
+               (or (non-terminal-description non-terminal)
+                   name))])
 
      [with-language-bindings language ([class-name name])
 

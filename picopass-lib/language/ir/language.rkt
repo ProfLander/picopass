@@ -14,6 +14,7 @@
 (struct language [stx
                   ident
                   entry-point-ident
+                  description
                   terminals
                   non-terminals
                   scope]
@@ -26,6 +27,7 @@
                                 (language-entry-point-ident self)])
                            (and entry-point
                                 (syntax->datum entry-point))))
+                   (list 'description (language-description self))
                    (cons 'terminals (language-terminals self))
                    (cons 'non-terminals (language-non-terminals self)))
              port)]))
