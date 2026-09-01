@@ -8,6 +8,7 @@
 (require racket/function
 
          syntax/parse
+         syntax/strip-context
 
          picopass/syntax
 
@@ -66,6 +67,28 @@
   "return the symbolic names of the datum-literals in SELF"
 
   (map syntax-e (non-terminal-datum-literals self)))
+
+(define (non-terminal-replace-context self lctx)
+  (-> non-terminal? syntax? non-terminal?)
+
+  (define (replace stx)
+    (-> syntax? syntax?)
+    (replace-context lctx stx))
+
+  (let ([stx (non-terminal-stx self)]
+        [ident (replace (non-terminal-ident self))]
+        [description (non-terminal-description self)]
+        [literals (map replace (non-terminal-literals self))]
+        [datum-literals (map replace (non-terminal-datum-literals self))]
+        [productions (map (curryr pattern-replace-context lctx)
+                          (non-terminal-productions self))])
+
+    (non-terminal stx
+                  ident
+                  description
+                  literals
+                  datum-literals
+                  productions)))
 
 (define (non-terminal=? a b)
   (-> non-terminal? non-terminal? boolean?)

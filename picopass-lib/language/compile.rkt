@@ -48,25 +48,24 @@
 (define (compile-language-parser name language)
   (-> syntax? language? syntax?)
   "compile the parser for LANGUAGE to syntax"
-  [with-language-bindings language ([entry-point
-                                     (language-entry-point-ident language)])
-   (with-syntax* ([name name])
-     #`(define name
-         (syntax-parser
-           [(~var _ entry-point)
-            this-syntax])))])
+  (with-syntax* ([name name]
+                 [entry-point [language-introduce language
+                               (language-entry-point-ident language)]])
+    #`(define name
+        (syntax-parser
+          [(~var _ entry-point)
+           this-syntax]))))
 
 (define (compile-terminal language terminal)
   (-> language? terminal? syntax?)
   "compile TERMINAL to syntax in context of LANGUAGE"
 
-  [with-language-syntax language ([class (terminal-class terminal)])
+  (with-syntax* ([class-name [language-introduce language
+                              (terminal-ident/name terminal)]]
+                 [class (make-rename-transformer
+                          (terminal-ident/class terminal))])
 
-   [with-language-bindings language ([class-name (terminal-name terminal)])
-
-    (with-syntax ([class (make-rename-transformer #'class)])
-
-      #`(define-syntax class-name class))]])
+    #'(define-syntax class-name class)))
 
 (define (compile-non-terminal language non-terminal)
   (-> language? non-terminal? syntax?)
@@ -78,50 +77,48 @@
          [literals
           (for/list ([literal (in-list (non-terminal-literals
                                          non-terminal))])
-            (language-introduce-datum language (syntax->datum literal)))]
+            (language-introduce language literal))]
 
          [datum-literals
           (for/list ([datum-literal (in-list (non-terminal-datum-literals
                                                non-terminal))])
-            (language-introduce-datum language (syntax->datum datum-literal)))]
+            (language-introduce language datum-literal))]
 
          [productions
           (for/list ([production (in-list (non-terminal-productions
                                             non-terminal))])
             (compile-production language non-terminal production))])
 
-    [with-language-syntax language
-     ([description
-       (format "~a ~a"
-               (or (language-description language)
-                   language-name)
-               (or (non-terminal-description non-terminal)
-                   name))])
+    (with-syntax ([description
+                   (format "~a ~a"
+                           (or (language-description language)
+                               language-name)
+                           (or (non-terminal-description non-terminal)
+                               name))]
+                  [(production ...) productions]
+                  [(literal ...)
+                   (if (pair? literals)
+                       #`(#:literals #,literals)
+                       #'())]
+                  [(datum-literal ...)
+                   (if (pair? datum-literals)
+                       #`(#:datum-literals #,datum-literals)
+                       #'())]
+                  [class-name [language-introduce language
+                               (non-terminal-ident non-terminal)]])
 
-     [with-language-bindings language ([class-name name])
-
-      (with-syntax ([(production ...) productions]
-                    [(literal ...)
-                     (if (pair? literals)
-                         #`(#:literals #,literals)
-                         #'())]
-                    [(datum-literal ...)
-                     (if (pair? datum-literals)
-                         #`(#:datum-literals #,datum-literals)
-                         #'())])
-
-        #`(define-syntax-class class-name
-            #:description description
-            literal
-            ...
-            datum-literal
-            ...
-            (pattern production
-                     #:do ([log-picopass-debug "parse ~a:\n~a"
-                            description
-                            (pretty-format (syntax->datum this-syntax)
-                                           #:mode 'display)]))
-            ...))]]))
+      #`(define-syntax-class class-name
+          #:description description
+          literal
+          ...
+          datum-literal
+          ...
+          (pattern production
+                   #:do ([log-picopass-debug "parse ~a:\n~a"
+                          description
+                          (pretty-format (syntax->datum this-syntax)
+                                         #:mode 'display)]))
+          ...))))
 
 (define (compile-production lang non-terminal production)
   (-> language? non-terminal? pattern? syntax?)
@@ -135,8 +132,8 @@
        (if (or (member ident literals datum=?)
                (member ident datum-literals datum=?))
            ident
-           [with-language-bindings lang ([ident ident])
-            #'(~var _ ident)]))]
+           (with-syntax ([ident (language-introduce lang ident)])
+             #'(~var _ ident))))]
 
     [(p-literal? production)
      (let ([ident (p-literal-ident production)])
@@ -146,7 +143,7 @@
          [(datum=? #'~cut ident)
           #'~!]
          [else
-          (language-introduce-datum lang ident)]))]
+          (language-introduce lang ident)]))]
 
     [(p-keyword? production)
      (p-keyword-stx production)]
