@@ -63,29 +63,3 @@
 
   ((pass-scope self) stx))
 
-(define (pass-introduce-datum self datum)
-  (-> pass? any/c syntax?)
-  #:trace #f
-  "convert DATUM to syntax in the context of SELF,
-   and add the private scope of SELF to it"
-
-  ((pass-scope self) (datum->pass-syntax self datum)))
-
-; Scoped multi-definition form of datum->pass-syntax
-(define-syntax (with-pass-syntax stx)
-  (syntax-parse stx
-    [(_ pass ([key val] ...) body ...)
-     #'(with-syntax ([key (datum->pass-syntax pass val)]
-                     ...)
-         body
-         ...)]))
-
-; Scoped multi-definition form of pass-introduce-datum
-(define-syntax (with-pass-bindings stx)
-  (syntax-parse stx
-    [(_ pass ([key val] ...) body ...)
-     #'(with-syntax ([key (pass-introduce-datum pass val)]
-                     ...)
-         body
-         ...)]))
-

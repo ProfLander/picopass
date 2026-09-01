@@ -6,6 +6,7 @@
 ; and additions / removals for terminals and non-terminals
 
 (require racket/list
+         racket/syntax
 
          threading
 
@@ -17,6 +18,7 @@
          picopass/language/validate
          picopass/language/ir/language
          picopass/language/ir/terminal
+         picopass/language/ir/non-terminal
          picopass/language/ir/non-terminal-delta)
 
 (provide (all-defined-out)
@@ -31,20 +33,21 @@
 
   #:methods gen:custom-write
   [(%define (write-proc self port _mode)
-            (display (list 'language
+            (display (list 'language-delta
                            (list 'name (syntax->datum (language-delta-ident self)))
                            (list 'entry-point
                                  (let ([entry-point
                                         (language-delta-entry-point-ident self)])
                                    (and entry-point
                                         (syntax->datum entry-point))))
-                           (cons 'description (language-description self))
+                           (cons 'description (language-delta-description self))
                            (cons 'delta-terminals (language-delta-delta-terminals self))
                            (cons 'non-terminals (language-delta-non-terminals self)))
                      port))])
 
 (define (language-delta-name self)
   (-> language-delta? symbol?)
+  #:trace #f
   "return the symbolic name of SELF"
 
   (syntax-e (language-delta-ident self)))
@@ -99,16 +102,25 @@
          [description (or (language-delta-description delta)
                           (language-description base))]
 
-         [terminals (language-terminals base)]
          [delta-terminals (language-delta-delta-terminals delta)]
-         [terminals (apply-delta delta-terminals terminals
+         [terminals (apply-delta delta-terminals (language-terminals base)
                                  #:equal? terminal=?
                                  #:on-missing
                                  (raise-missing-removed-terminal-error
                                    (language-delta-name delta)))]
 
+         [terminals
+          (for/list ([terminal terminals])
+            (terminal-replace-context terminal ident))]
+
+         [non-terminals (language-non-terminals base)]
+
          [non-terminals
-          (extend-non-terminals (language-non-terminals base)
+          (for/list ([non-terminal (in-list non-terminals)])
+            (non-terminal-replace-context non-terminal ident))]
+
+         [non-terminals
+          (extend-non-terminals non-terminals
                                 (language-delta-non-terminals delta))])
 
     (language stx

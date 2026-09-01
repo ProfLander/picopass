@@ -186,7 +186,7 @@
                           (input-handler-with-processor input-handler
                                                         processor)))))])
 
-    [datum->syntax (pass-stx pass)
+    [datum->syntax (pass-context pass)
      (for/list ([input-handler (in-list input-handlers)])
        (let-values ([(clauses outputs)
                      (for/fold ([clauses null]
@@ -194,7 +194,7 @@
                                ([processor (in-list (input-handler-processors
                                                       input-handler))])
                        (let* ([proc-clauses (processor-clauses processor)]
-                              [proc-outputs (map (const (processor-output processor))
+                              [proc-outputs (map (const (processor-output-ident processor))
                                                  proc-clauses)])
                          (values (append clauses proc-clauses)
                                  (append outputs proc-outputs))))])
@@ -211,8 +211,7 @@
   (-> pass?
       syntax?
       (listof processor-clause?)
-      (or/c (listof non-terminal?)
-            (listof syntax?))
+      (listof syntax?)
       syntax?)
   #:trace-depth 5
   "compile the input handler corresponding to NON-TERMINAL
@@ -232,15 +231,8 @@
                       clauses)]
 
          [outputs (if auto-generate
-                      (append outputs (map (const non-terminal) undefined))
+                      (append outputs (map (const (non-terminal-ident non-terminal)) undefined))
                       outputs)]
-
-         [outputs
-          (if auto-generate
-              (for/list ([output (in-list outputs)])
-                [language-introduce-datum (pass-output pass)
-                 (non-terminal-ident output)])
-              outputs)]
 
          [literals
           (for/list ([name (non-terminal-literal-names non-terminal)])
@@ -250,30 +242,29 @@
           (for/list ([name (non-terminal-datum-literal-names non-terminal)])
             (datum->pass-syntax pass name))])
 
-    [with-pass-bindings pass ([input-ident input-ident])
+    (with-syntax* ([input-ident (pass-introduce pass input-ident)]
+                   [pass-ident (pass-ident pass)]
+                   [pass-ref (pass-self-ref pass)]
+                   [(literal ...)
+                    (if (pair? literals)
+                        #`(#:literals #,literals)
+                        #'())]
+                   [(datum-literal ...)
+                    (if (pair? datum-literals)
+                        #`(#:datum-literals #,datum-literals)
+                        #'())]
+                   [(clause ...) [compile-clauses pass
+                                  clauses
+                                  outputs]])
 
-     (with-syntax* ([pass-ident (pass-ident pass)]
-                    [pass-ref (pass-self-ref pass)]
-                    [(literal ...)
-                     (if (pair? literals)
-                         #`(#:literals #,literals)
-                         #'())]
-                    [(datum-literal ...)
-                     (if (pair? datum-literals)
-                         #`(#:datum-literals #,datum-literals)
-                         #'())]
-                    [(clause ...) [compile-clauses pass
-                                   clauses
-                                   outputs]])
-
-       #'(define input-ident
-           (syntax-parser
-             literal
-             ...
-             datum-literal
-             ...
-             clause
-             ...)))]))
+      #'(define input-ident
+          (syntax-parser
+            literal
+            ...
+            datum-literal
+            ...
+            clause
+            ...)))))
 
 (define (compile-pass-input-handler/match pass input-ident
                                           clauses outputs)
@@ -289,27 +280,19 @@
   (let* ([processor (findf (λ (processor)
                              (datum=? input-ident
                                       (processor-input processor)))
-                           (pass-processors pass))]
-         [pass-output (pass-output pass)]
-         [outputs
-          (for/list ([output (in-list outputs)])
-            (if (non-terminal? output)
-                [language-introduce-datum pass-output
-                 (non-terminal-ident output)]
-                output))])
+                           (pass-processors pass))])
 
-    [with-pass-bindings pass ([input-ident input-ident])
+    (with-syntax ([input-ident (pass-introduce pass input-ident)]
+                  [pass-ident (pass-ident pass)]
+                  [pass-ref (pass-self-ref pass)]
+                  [(clause ...) [compile-clauses pass
+                                 clauses
+                                 outputs]])
 
-     (with-syntax ([pass-ident (pass-ident pass)]
-                   [pass-ref (pass-self-ref pass)]
-                   [(clause ...) [compile-clauses pass
-                                  clauses
-                                  outputs]])
-
-       #'(define (input-ident val)
-           (match val
-             clause
-             ...)))]))
+      #'(define (input-ident val)
+          (match val
+            clause
+            ...)))))
 
 ; Processor clause
 
@@ -336,7 +319,11 @@
       ([pass-name (pass-name pass)]
        [(clause-pattern-syntax ...) clause-pattern-syntaces]
        [([clause-body ...] ...) clause-bodies]
-       [(output-class ...) output-classes]
+       [(output-class ...)
+        (if (language? pass-output)
+            (for/list ([output-class (in-list output-classes)])
+              (language-introduce pass-output output-class))
+            output-classes)]
        [(clause-tail ...)
         (cond
           [(eq? #f pass-output)
@@ -424,15 +411,15 @@
                [(p-list _stx (list (p-literal lit) pattern*))
                 #:when (datum=? #'~maybe lit)
                 (let ([clause (non-terminal-pattern->clause pass pattern*)])
-                  [with-pass-syntax pass ([~? '~?]
-                                          [tmp (generate-temporary)])
-                   (values (p-list lctx
-                                   (list (p-literal #'~optional)
-                                         (p-list lctx
-                                                 (list (p-literal #'~and)
-                                                       (p-ident #'tmp)
-                                                       (car clause)))))
-                           #'(~? tmp))])]
+                  (with-syntax ([~? (quote-syntax ~?)]
+                                [tmp (generate-temporary)])
+                    (values (p-list lctx
+                                    (list (p-literal #'~optional)
+                                          (p-list lctx
+                                                  (list (p-literal #'~and)
+                                                        (p-ident #'tmp)
+                                                        (car clause)))))
+                            #'(~? tmp))))]
                [_ (let ([clause (non-terminal-pattern->clause pass pattern)])
                     (values (car clause)
                             (cdr clause)))]))])
@@ -509,8 +496,7 @@
   (let* ([input (pass-input pass)]
          [class
           (if (language? input)
-              (language-introduce input
-                                  (datum->pass-syntax pass class))
+              (language-introduce input class)
               class)])
 
     #`(~var #,ident #,class)))

@@ -4,7 +4,12 @@
 ;
 ; Represents a match or syntax-parse pattern
 
-(require picopass/syntax)
+(require racket/function
+         racket/match
+
+         syntax/strip-context
+
+         picopass/syntax)
 
 (provide (all-defined-out))
 
@@ -145,4 +150,23 @@
     [(p-list? self) (p-list-stx self)]
     [(p-repeat? self) (p-repeat-stx self)]
     [else (error "not a pattern:" self)]))
+
+(define (pattern-replace-context self lctx)
+  (-> pattern? syntax? pattern?)
+
+  (define (replace stx)
+    (-> syntax? syntax?)
+    (replace-context lctx stx))
+
+  (match self
+    [(p-ident ident)
+     (p-ident (replace ident))]
+    [(p-literal ident)
+     (p-literal (replace ident))]
+    [(p-keyword keyword)
+     (p-keyword (replace keyword))]
+    [(p-list stx lst)
+     (p-list (replace stx) (map (curryr pattern-replace-context lctx) lst))]
+    [(p-repeat stx min)
+     (p-repeat (replace stx) min)]))
 

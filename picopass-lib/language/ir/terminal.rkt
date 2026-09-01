@@ -4,7 +4,7 @@
 ;
 ; Represents a named language terminal with a corresponding syntax class
 
-(require syntax/parse)
+(require syntax/strip-context)
 
 (provide (all-defined-out)
          (struct-out terminal))
@@ -29,6 +29,15 @@
   "return the symbolic class of SELF"
 
   (syntax-e (terminal-ident/class self)))
+
+(define (terminal-replace-context self lctx) 
+  (-> terminal? syntax? terminal?)
+  (let ([stx (terminal-stx self)]
+        [ident/name (terminal-ident/name self)]
+        [ident/class (terminal-ident/class self)])
+    (terminal stx
+              (replace-context lctx ident/name)
+              (replace-context lctx ident/class))))
 
 (define (terminal=? a b)
   (-> terminal? terminal? boolean?)
