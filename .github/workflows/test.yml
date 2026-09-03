@@ -1,0 +1,27 @@
+name: test
+
+on: [push, pull_request]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Install Racket
+        uses: Bogdanp/setup-racket@v1.9.1
+        with:
+          version: 'stable'
+
+      - name: Install package and its dependencies
+        run: make install
+
+      - name: Run tests
+        run: make test
+
