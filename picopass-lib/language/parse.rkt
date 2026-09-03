@@ -35,16 +35,20 @@
 
            #:do [(log-picopass-debug "parse-language:\n~a"
                                      (pretty-format 
-                                       (syntax->datum this-syntax)))]
+                                       (syntax->datum this-syntax)))
+                 (define scope-key 
+                   (make-language-scope-key (syntax-e #'name)))]
 
-           #:attr struct (language this-syntax
-                                   (attribute name)
-                                   (attribute entry-point)
-                                   (and (attribute description)
-                                        (syntax-e (attribute description)))
-                                   (attribute terminal.struct)
-                                   (attribute non-terminal.struct)
-                                   (make-syntax-introducer))))
+           #:attr struct
+           (language this-syntax
+                     (attribute name)
+                     (attribute entry-point)
+                     (and (attribute description)
+                          (syntax-e (attribute description)))
+                     (attribute terminal.struct)
+                     (attribute non-terminal.struct)
+                     scope-key
+                     (make-interned-syntax-introducer scope-key))))
 
 (define-syntax-class parse-terminal
   #:description "terminal"

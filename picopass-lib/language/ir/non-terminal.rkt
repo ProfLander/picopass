@@ -110,3 +110,20 @@
                  [b (in-list (non-terminal-productions b))])
          (pattern=? a b))))
 
+(define (non-terminal->syntax self)
+  (-> non-terminal? syntax?)
+  
+  (with-syntax ([this-syntax #`(quote-syntax #,(non-terminal-stx self))]
+                [ident (non-terminal-ident self)]
+                [description (non-terminal-description self)]
+                [(literal ...) (non-terminal-literals self)]
+                [(datum-literal ...) (non-terminal-datum-literals self)]
+                [(production ...) (map pattern->syntax
+                                       (non-terminal-productions self))])
+             #'(non-terminal this-syntax
+                             #'ident
+                             description
+                             (list #'literal ...)
+                             (list #'datum-literal ...)
+                             (list production ...))))
+

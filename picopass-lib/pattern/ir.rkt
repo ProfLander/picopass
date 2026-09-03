@@ -170,3 +170,24 @@
     [(p-repeat stx min)
      (p-repeat (replace stx) min)]))
 
+(define (pattern->syntax self)
+  (-> pattern? syntax?)
+  (match self
+    [(p-ident ident)
+     (with-syntax ([ident #`(quote-syntax #,ident)])
+       #'(p-ident ident))]
+    [(p-literal ident)
+     (with-syntax ([ident #`(quote-syntax #,ident)])
+       #'(p-literal ident))]
+    [(p-keyword keyword)
+     (with-syntax ([keyword #`(quote-syntax #,keyword)])
+       #'(p-keyword keyword))]
+    [(p-list stx lst)
+     (with-syntax ([stx #`(quote-syntax #,stx)]
+                   [(pat ...) (map pattern->syntax lst)])
+       #'(p-list stx (list pat ...)))]
+    [(p-repeat stx min)
+     (with-syntax ([stx #`(quote-syntax #,stx)]
+                   [min min])
+       #'(p-repeat stx min))]))
+

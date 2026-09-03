@@ -49,3 +49,12 @@
        (equal? (terminal-class a)
                (terminal-class b))))
 
+(define (terminal->syntax self)
+  (-> terminal? syntax?)
+  (with-syntax ([this-syntax #`(quote-syntax #,(terminal-stx self))]
+                [name (terminal-name self)]
+                [class (terminal-class self)])
+    #'(terminal this-syntax
+                #'name
+                #'class)))
+
