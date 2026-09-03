@@ -33,7 +33,7 @@
                      [raise-syntax-error 'define-language
                       (format "unbound language ~a" (syntax-e ident))
                       lctx
-                      #'delta.extends])]])
+                      ident])]])
 
     (unless (language? language)
       [raise-syntax-error 'define-language
