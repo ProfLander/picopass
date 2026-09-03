@@ -247,8 +247,6 @@
             (datum->pass-syntax pass name))])
 
     (with-syntax* ([input-ident (pass-introduce pass input-ident)]
-                   [pass-ident (pass-ident pass)]
-                   [pass-ref (pass-self-ref pass)]
                    [(literal ...)
                     (if (pair? literals)
                         #`(#:literals #,literals)
@@ -281,22 +279,15 @@
   "compile the input handler corresponding to PROCESSOR
    to match syntax using CLAUSES with OUTPUTS in context of PASS"
 
-  (let* ([processor (findf (λ (processor)
-                             (datum=? input-ident
-                                      (processor-input processor)))
-                           (pass-processors pass))])
+  (with-syntax ([input-ident (pass-introduce pass input-ident)]
+                [(clause ...) [compile-clauses pass
+                               clauses
+                               outputs]])
 
-    (with-syntax ([input-ident (pass-introduce pass input-ident)]
-                  [pass-ident (pass-ident pass)]
-                  [pass-ref (pass-self-ref pass)]
-                  [(clause ...) [compile-clauses pass
-                                 clauses
-                                 outputs]])
-
-      #'(define (input-ident val)
-          (match val
-            clause
-            ...)))))
+    #'(define (input-ident val)
+        (match val
+          clause
+          ...))))
 
 ; Processor clause
 
