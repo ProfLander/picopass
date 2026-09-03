@@ -154,14 +154,14 @@
 
 (define (validate-production/valid-idents lang non-terminal production)
   (-> language?
-      (or/c non-terminal? void?)
+      non-terminal?
       pattern?
-      pattern?)
+      (or/c pattern? none/c))
   "ensure identifiers in SELF are valid"
 
   (define (rec language non-terminal production pattern)
     (-> language?
-        (or/c non-terminal? void?)
+        non-terminal?
         pattern?
         pattern?
         pattern?)
