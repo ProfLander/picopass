@@ -5,6 +5,7 @@
 ; Asserts invariants over a language to produce useful syntax errors
 
 (require racket/list
+         racket/match
 
          threading
 
@@ -23,7 +24,7 @@
 
 (define (validate-language language)
   (-> language? (or/c language? none/c))
-  "ensure SELF is a valid language"
+  "ensure LANGUAGE is a valid language"
 
   (~> language
       (validate-language/entry-point)
@@ -33,7 +34,7 @@
 
 (define (validate-language/entry-point language)
   (-> language? (or/c language? none/c))
-  "ensure the entry-point of SELF points to a valid non-terminal"
+  "ensure the entry-point of LANGUAGE points to a valid non-terminal"
 
   (let* ([entry-point (language-entry-point-ident language)]
          [non-terminal-idents (map non-terminal-ident
@@ -45,7 +46,7 @@
 
 (define (validate-language/unique-idents language)
   (-> language? (or/c language? none/c))
-  "ensure terminal and non-terminal identifiers in SELF are unique"
+  "ensure terminal and non-terminal identifiers in LANGUAGE are unique"
 
   (let* ([terminal-idents (map terminal-ident/name
                                (language-terminals language))]
@@ -62,7 +63,7 @@
 
 (define (validate-language/valid-terminals language)
   (-> language? (or/c language? none/c))
-  "ensure all the terminals in SELF are valid"
+  "ensure all the terminals in LANGUAGE are valid"
 
   (for ([terminal (in-list (language-terminals language))])
     (validate-terminal terminal))
@@ -71,7 +72,7 @@
 
 (define (validate-language/valid-non-terminals language)
   (-> language? (or/c language? none/c))
-  "ensure all non-terminals in SELF are valid"
+  "ensure all non-terminals in LANGUAGE are valid"
 
   (for ([non-terminal (in-list (language-non-terminals language))])
     (validate-non-terminal language non-terminal))
@@ -82,14 +83,14 @@
 
 (define (validate-terminal terminal)
   (-> terminal? (or/c terminal? none/c))
-  "ensure SELF is a valid terminal"
+  "ensure TERMINAL is a valid terminal"
 
   (~> terminal
       (validate-terminal/valid-class)))
 
 (define (validate-terminal/valid-class terminal)
   (-> terminal? (or/c terminal? none/c))
-  "ensure the class in SELF points to a valid binding"
+  "ensure the class in TERMINAL points to a valid binding"
 
   (let* ([class (terminal-ident/class terminal)]
          [binding (identifier-binding class)])
@@ -103,7 +104,7 @@
 
 (define (validate-non-terminal language non-terminal)
   (-> language? non-terminal? (or/c non-terminal? none/c))
-  "ensure SELF is a valid non-terminal"
+  "ensure NON-TERMINAL is a valid non-terminal in the context of LANGUAGE"
 
   (~> non-terminal
       (validate-non-terminal/unique-literals _)
@@ -112,7 +113,7 @@
 
 (define (validate-non-terminal/unique-literals non-terminal)
   (-> non-terminal? (or/c non-terminal? none/c))
-  "ensure literals and datum-literals in SELF are unique"
+  "ensure literals and datum-literals in NON-TERMINAL are unique"
 
   (let* ([literals (non-terminal-literals non-terminal)]
          [datum-literals (non-terminal-datum-literals non-terminal)]
@@ -125,7 +126,7 @@
 
 (define (validate-non-terminal/unique-productions non-terminal)
   (-> non-terminal? (or/c non-terminal? none/c))
-  "ensure productions in SELF are unique"
+  "ensure productions in NON-TERMINAL are unique"
 
   (let* ([productions (non-terminal-productions non-terminal)]
          [duplicate (check-duplicates productions pattern=?)])
@@ -136,7 +137,8 @@
 
 (define (validate-non-terminal/valid-productions language non-terminal)
   (-> language? non-terminal? (or/c non-terminal? none/c))
-  "ensure productions in SELF are valid"
+  "ensure the productions of NON-TERMINAL are valid
+   in the context of LANGUAGE"
 
   (for ([production (in-list (non-terminal-productions non-terminal))])
     (validate-production language non-terminal production))
@@ -147,17 +149,19 @@
 
 (define (validate-production language non-terminal production)
   (-> language? (or/c non-terminal? void?) pattern? pattern?)
-  "ensure SELF is a valid production"
+  "ensure PRODUCTION is a valid production
+   in the context of NON-TERMINAL and LANGUAGE"
 
   (~> production
       (validate-production/valid-idents language non-terminal _)))
 
-(define (validate-production/valid-idents lang non-terminal production)
+(define (validate-production/valid-idents language non-terminal production)
   (-> language?
       non-terminal?
       pattern?
       (or/c pattern? none/c))
-  "ensure identifiers in SELF are valid"
+  "ensure identifiers in PRODUCTION are valid
+   in the context of NON-TERMINAL and LANGUAGE"
 
   (define (rec language non-terminal production pattern)
     (-> language?
@@ -191,5 +195,5 @@
        pattern]
       [else (error "not a production:" pattern)]))
 
-  (rec lang non-terminal production production))
+  (rec language non-terminal production production))
 
