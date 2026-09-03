@@ -25,13 +25,16 @@
          [description (language-description self)]
          [terminals (language-terminals self)]
          [non-terminals (map normalize-non-terminal
-                             (language-non-terminals self))])
+                             (language-non-terminals self))]
+         [scope-key (language-scope-key self)]
+         [scope (language-scope self)])
     (language stx
               ident
               entry-point-ident
               description
               terminals
               non-terminals
+              scope-key
               scope)))
 
 (define (normalize-non-terminal self)

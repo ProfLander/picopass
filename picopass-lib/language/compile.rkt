@@ -32,12 +32,14 @@
 
                  [(non-terminal ...)
                   (for/list ([non-terminal (in-list (language-non-terminals language))])
-                    (compile-non-terminal language non-terminal))])
+                    (compile-non-terminal language non-terminal))]
+
+                 [language (language->syntax language)])
 
     #`(begin
 
         (define-syntax ident
-          #,language)
+          language)
 
         terminal
         ...
@@ -62,10 +64,10 @@
 
   (with-syntax* ([class-name [language-introduce language
                               (terminal-ident/name terminal)]]
-                 [class (make-rename-transformer
-                          (terminal-ident/class terminal))])
+                 [class #`(quote-syntax #,(terminal-ident/class terminal))])
 
-    #'(define-syntax class-name class)))
+    #'(define-syntax class-name 
+        (make-rename-transformer class))))
 
 (define (compile-non-terminal language non-terminal)
   (-> language? non-terminal? syntax?)

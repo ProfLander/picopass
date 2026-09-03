@@ -119,11 +119,11 @@
                                 (syntax-e class)
                                 (language-name lang))])
 
-                     (make-rename-transformer
-                       (language-introduce lang class)))])
+                     #`(quote-syntax #,(language-introduce lang class)))])
 
       (let ([stx #'(begin
-                     (define-syntax name class)
+                     (define-syntax name
+                       (make-rename-transformer class))
                      ...)])
 
         (log-picopass-info "define-language-classes ~a output:\n~a\n"

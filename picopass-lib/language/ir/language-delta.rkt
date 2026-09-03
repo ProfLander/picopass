@@ -121,7 +121,10 @@
 
          [non-terminals
           (extend-non-terminals non-terminals
-                                (language-delta-non-terminals delta))])
+                                (language-delta-non-terminals delta))]
+
+         [scope-key
+          (make-language-scope-key (syntax-e ident))])
 
     (language stx
               ident
@@ -129,5 +132,6 @@
               description
               terminals
               non-terminals
-              (make-syntax-introducer))))
+              scope-key
+              (make-interned-syntax-introducer scope-key))))
 
