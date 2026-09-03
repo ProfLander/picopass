@@ -14,6 +14,7 @@
          racket/syntax
 
          syntax/parse
+         syntax/strip-context
 
          picopass/syntax
 
@@ -79,7 +80,10 @@
     (with-syntax ([non-terminal-ident
                    (language-introduce input entry-point-ident)]
                   [pass-ident
-                   (pass-introduce pass entry-point-ident)])
+                   [pass-introduce pass
+                    [replace-context (pass-context pass)
+                     entry-point-ident]]])
+
       #'(syntax-parser
           [(~var prod non-terminal-ident)
            (pass-ident (attribute prod))]))))
@@ -517,12 +521,15 @@
   (define-values (ident class) (split-ident+class ident+class))
 
   (let ([lang (pass-input pass)])
+
     (with-syntax ([ident (datum->pass-syntax pass ident)]
 
                   [temp-ident
                    (format-id #'pat "~a" (generate-temporary #'ident))]
 
-                  [class/language [language-introduce lang class]]
+                  [class/language [language-introduce lang
+                                   [replace-context (language-context lang)
+                                    class]]]
 
                   [class/pass [pass-introduce pass class]])
 
