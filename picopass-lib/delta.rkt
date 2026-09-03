@@ -82,12 +82,13 @@
                            #:on-missing on-missing)))
 
 (module+ test
-  (define del (make-delta #:remove '(1 6) #:add '(3 4)))
-  (printf "del: ~a\n" del)
+  (require rackunit)
 
-  (define tgt '(1 2 5 6))
-  (printf "tgt: ~a\n" tgt)
+  (test-case "apply-delta"
 
-  (define res (apply-delta del tgt))
-  (printf "res: ~a\n" res))
+    (let ([del (make-delta #:remove '(1 6) #:add '(3 4))]
+          [tgt '(1 2 5 6)])
+
+      (check-equal? (apply-delta del tgt)
+                    '(2 5 3 4)))))
 
