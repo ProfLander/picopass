@@ -89,7 +89,11 @@ language.
                                           [(- pattern ...+)]
                                           [(+ pattern ...+)]))
 
-                    (pattern ident
+                    (pattern #t
+                             #f
+                             number
+                             string
+                             ident
                              literal-ident
                              keyword
                              (~maybe pattern)
@@ -145,10 +149,10 @@ form.
 
 @subsection{Non-terminal productions}
 
-The @racket[pattern] clause may contain terminal or non-terminal identifiers,
-literals, keywords, lists of nested patterns, @racket[~maybe] whose child
-pattern may appear zero or one times, a zero-or-more repetition @racket[...],
-or a one-or-more repetition @racket[...+].
+The @racket[pattern] clause may contain boolean / number / string data, terminal
+or non-terminal identifiers, literals, keywords, lists of nested patterns,
+@racket[~maybe] whose child pattern may appear zero or one times, a zero-or-more
+repetition @racket[...], or a one-or-more repetition @racket[...+].
 
 @subsubsection{Production ordering}
 
@@ -212,7 +216,11 @@ languages or arbitrary Racket values described by predicates.
 
                     (processor-clause (pattern
                                        body-expr ...+))
-                    (pattern ident
+                    (pattern #t
+                             #f
+                             number
+                             string
+                             ident
                              (pattern ...)
                              (~rec ident)
                              (~maybe pattern)
