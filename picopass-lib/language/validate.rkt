@@ -153,7 +153,19 @@
    in the context of NON-TERMINAL and LANGUAGE"
 
   (~> production
-      (validate-production/valid-idents language non-terminal _)))
+      (validate-production/valid-idents language non-terminal _)
+      (validate-production/no-root-maybe _)))
+
+(define (validate-production/no-root-maybe production)
+  (-> pattern? 
+      (or/c pattern? none/c))
+  "ensure PRODUCTION is not a ~maybe special pattern"
+
+  (match production
+    [(p-list stx (list (p-literal lit) _))
+     #:when (datum=? #'~maybe lit)
+     (raise-production-root-maybe-error production stx)]
+    [_ production]))
 
 (define (validate-production/valid-idents language non-terminal production)
   (-> language?

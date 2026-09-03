@@ -127,6 +127,12 @@
            (language-name lang))
    ident])
 
+(define (raise-production-root-maybe-error prod stx)
+  (-> pattern? syntax? none/c)
+  [raise-production-error prod
+   "~maybe may not be used as the root of a production"
+   stx])
+
 ; Language Delta
 
 (define ((raise-missing-removed-terminal-error name) _target missing)
