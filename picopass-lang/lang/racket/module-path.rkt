@@ -44,6 +44,7 @@
  #; (vers
       nat
       (~seq nat minor-vers))
+
  (minor-vers
    #:datum-literals [= + -]
    nat
