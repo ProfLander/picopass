@@ -3,10 +3,10 @@ SHELL=/usr/bin/env bash
 PACKAGE-NAME=picopass
 
 install:
-	raco pkg install --deps search-auto --link ${PWD}/${PACKAGE-NAME}-{lib,test,doc} $(PWD)/$(PACKAGE-NAME)
+	raco pkg install --deps search-auto --link ${PWD}/${PACKAGE-NAME}-{lib,test,doc,lang} $(PWD)/$(PACKAGE-NAME)
 
 uninstall:
-	raco pkg uninstall $(PACKAGE-NAME)-{lib,test,doc} $(PACKAGE-NAME)
+	raco pkg uninstall $(PACKAGE-NAME)-{lib,test,doc,lang} $(PACKAGE-NAME)
 
 build:
 	raco setup --no-docs --pkgs $(PACKAGE-NAME)-lib
@@ -20,13 +20,13 @@ build-standalone-docs:
 	--dest ./docs ./picopass-doc/scribblings/picopass.scrbl
 
 build-all:
-	raco setup $(DEPS-FLAGS) --pkgs $(PACKAGE-NAME)-{lib,test,doc} $(PACKAGE-NAME)
+	raco setup $(DEPS-FLAGS) --pkgs $(PACKAGE-NAME)-{lib,test,doc,lang} $(PACKAGE-NAME)
 
 clean:
-	raco setup --fast-clean --pkgs $(PACKAGE-NAME)-{lib,test,doc}
+	raco setup --fast-clean --pkgs $(PACKAGE-NAME)-{lib,test,doc,lang}
 
 test:
-	raco test -exp $(PACKAGE-NAME)-{lib,test,doc}
+	raco test -exp $(PACKAGE-NAME)-{lib,test,doc,lang}
 
 .PHONY: install remove
 

@@ -5,11 +5,13 @@
 (define deps '("base"
                "picopass-lib"
                "picopass-doc"
-               "picopass-test"))
+               "picopass-test"
+               "picopass-lang"))
 
 (define implies '("picopass-lib"
                   "picopass-doc"
-                  "picopass-test"))
+                  "picopass-test"
+                  "picopass-lang"))
 
 (define pkg-desc "A syntax-flavoured nanopass framework for Racket.")
 (define version "0.0")
