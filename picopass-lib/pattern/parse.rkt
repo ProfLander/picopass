@@ -20,12 +20,22 @@
 
 (define-syntax-class (parse-pattern literal?)
   #:description "pattern"
-  (pattern (~datum ...)
+
+  (pattern (~or #f
+                #t
+                num:number
+                str:string)
 
            #:do [(log-picopass-debug "parse-pattern:\n~a"
                                      (pretty-format
                                        (syntax->datum this-syntax)))]
 
+           #:attr struct (p-literal this-syntax))
+
+  (pattern (~datum ...)
+           #:do [(log-picopass-debug "parse-pattern:\n~a"
+                                     (pretty-format
+                                       (syntax->datum this-syntax)))]
            #:attr struct (p-repeat this-syntax 0))
 
   (pattern (~datum ...+)
