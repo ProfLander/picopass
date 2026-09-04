@@ -2,9 +2,12 @@
 
 (module+ test
   (require racket/string
+           racket/syntax
            rackunit
            picopass/lang/s-lua/language
            picopass/lang/s-lua/to-source)
+
+  (define/with-syntax ooo (quote-syntax ...))
 
   (test-equal? "assignment"
                (s-lua->lua #'[(= [x] [y])
@@ -113,7 +116,7 @@
                                                            true
                                                            1
                                                            "s"
-                                                           vararg])])
+                                                           ooo])])
                (string-join '("local literals_and_forms = nil, false, true, 1, \"s\", ...")
                             "\n"))
 
@@ -162,7 +165,7 @@
                             "\n"))
 
   (test-equal? "namelist function"
-               (s-lua->lua #'[(local (function (named_varargs a b vararg)
+               (s-lua->lua #'[(local (function (named_varargs a b ooo)
                                                (return)))])
                (string-join '("local function named_varargs(a, b, ...)"
                               "  return"
@@ -178,8 +181,8 @@
                             "\n"))
 
   (test-equal? "anonymous vararg function"
-               (s-lua->lua #'[(local [anonymous] [(function (a b vararg)
-                                                            (return vararg))])])
+               (s-lua->lua #'[(local [anonymous] [(function (a b ooo)
+                                                            (return ooo))])])
                (string-join '("local anonymous = function(a, b, ...)"
                               "  return ..."
                               "end")
@@ -247,8 +250,8 @@
                             "\n"))
 
   (test-equal? "vararg-host"
-               (s-lua->lua #'[(local (function (vararg_host vararg)
-                                               (local [_] [vararg])))])
+               (s-lua->lua #'[(local (function (vararg_host ooo)
+                                               (local [_] [ooo])))])
                (string-join '("local function vararg_host(...)"
                               "  local _ = ..."
                               "end")

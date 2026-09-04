@@ -50,7 +50,7 @@
            "reserved name"))
 
 (define-syntax-class vararg
-  (pattern (~datum vararg)))
+  (pattern (~datum ...)))
 
 ; funcname ::=
 (define-syntax-class function-name
