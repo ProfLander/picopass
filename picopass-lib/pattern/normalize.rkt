@@ -28,8 +28,10 @@
              (member ident datum-literals datum=?))
          (p-literal ident)
          self)]
-    [(p-list stx lst)
-     (p-list stx (map (curryr normalize-pattern literals datum-literals)
-                      lst))]
+    [(p-list stx lst tail)
+     (p-list stx 
+             (map (curryr normalize-pattern literals datum-literals)
+                  lst)
+             (normalize-pattern tail literals datum-literals))]
     [_ self]))
 

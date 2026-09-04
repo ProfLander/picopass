@@ -254,12 +254,11 @@
 
     (if (language? pass-input)
 
-        (let* ([processor-input (processor-input processor)]
-               [pattern (processor-clause-pattern clause)])
+        (let* ([pattern (processor-clause-pattern clause)])
 
           (match pattern
 
-            [(p-list stx (list (p-literal lit) (p-ident ident)))
+            [(p-list stx (list (p-literal lit) (p-ident ident)) #f)
              #:when (datum=? #'~rec lit)
 
              (let* ([terminals (language-terminals pass-input)]

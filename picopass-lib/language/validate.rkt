@@ -162,7 +162,7 @@
   "ensure PRODUCTION is not a ~maybe special pattern"
 
   (match production
-    [(p-list stx (list (p-literal lit) _))
+    [(p-list stx (list (p-literal lit) _) #f)
      #:when (datum=? #'~maybe lit)
      (raise-production-root-maybe-error production stx)]
     [_ production]))
@@ -182,10 +182,9 @@
         pattern?
         pattern?)
     "ensure SELF references a valid literal, datum-literal, terminal, or non-terminal"
-    (cond
-      [(p-ident? pattern)
-       (let ([ident (p-ident-ident pattern)]
-             [literals (non-terminal-literals non-terminal)]
+    (match pattern
+      [(p-ident ident)
+       (let ([literals (non-terminal-literals non-terminal)]
              [datum-literals (non-terminal-datum-literals non-terminal)]
              [terminal-idents (map terminal-ident/name
                                    (language-terminals language))]
@@ -197,15 +196,16 @@
                      (member ident non-terminal-idents datum=?))
            (raise-production-invalid-ident-error production language ident)))
        pattern]
-      [(p-list? pattern)
-       (p-list (p-list-stx pattern)
-               (for/list ([pattern* (in-list (p-list-list pattern))])
-                 (rec language non-terminal production pattern*)))]
-      [(or (p-literal? pattern)
-           (p-keyword? pattern)
-           (p-repeat? pattern))
+      [(p-list stx lst tail)
+       (p-list stx
+               (for/list ([pattern* (in-list lst)])
+                 (rec language non-terminal production pattern*))
+               (and tail (rec language non-terminal production tail)))]
+      [(or (p-literal _)
+           (p-keyword _)
+           (p-repeat _ _))
        pattern]
-      [else (error "not a production:" pattern)]))
+      [_ (error "not a production:" pattern)]))
 
   (rec language non-terminal production production))
 

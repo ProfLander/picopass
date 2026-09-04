@@ -8,9 +8,7 @@
 
            threading
 
-           picopass/syntax)
-
-  (define-binary-check (check-datum=? datum=? actual expected))
+           picopass/rackunit)
 
   ;; L0: Lambda calculus with n-ary abs / app
 
@@ -35,7 +33,7 @@
   (define l0-stx
     #'(begin (app (abs (x y) x) 1234 5678)))
 
-  (test-case "Parse L0"
+  (test-case "parse-L0"
     (check-not-exn
       (thunk
         (parse-L0 l0-stx))))
@@ -57,7 +55,7 @@
   (define l1-stx
     #'(begin (app (app (abs x (abs y x)) 1234) 5678)))
 
-  (test-case "Parse L1"
+  (test-case "parse-L1"
     (check-not-exn
       (thunk
         (parse-L1 l1-stx))))
