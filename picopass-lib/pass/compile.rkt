@@ -239,12 +239,12 @@
                       outputs)]
 
          [literals
-          (for/list ([name (non-terminal-literal-names non-terminal)])
-            (datum->pass-syntax pass name))]
+          (for/list ([literal (non-terminal-literals non-terminal)])
+            (replace-context (pass-context pass) literal))]
 
          [datum-literals
-          (for/list ([name (non-terminal-datum-literal-names non-terminal)])
-            (datum->pass-syntax pass name))])
+          (for/list ([datum-literal (non-terminal-datum-literals non-terminal)])
+            (replace-context (pass-context pass) datum-literal))])
 
     (with-syntax* ([input-ident (pass-introduce pass input-ident)]
                    [(literal ...)
@@ -446,7 +446,8 @@
        (cons (p-ident ident) ident)]
 
       [(p-repeat stx _min)
-       (cons (p-repeat stx 0) (datum->pass-syntax pass '...))])))
+       (cons (p-repeat stx 0) 
+             (datum->syntax (pass-context pass) '...))])))
 
 ; Processor clause
 
@@ -513,7 +514,7 @@
 
   (let ([lang (pass-input pass)])
 
-    (with-syntax ([ident (datum->pass-syntax pass ident)]
+    (with-syntax ([ident (replace-context (pass-context pass) ident)]
 
                   [temp-ident
                    (format-id #'pat "~a" (generate-temporary #'ident))]

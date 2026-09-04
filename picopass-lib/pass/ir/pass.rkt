@@ -49,13 +49,6 @@
 
   (pass-ident self))
 
-(define (datum->pass-syntax self datum)
-  (-> pass? any/c syntax?)
-  #:trace #f
-  "convert DATUM to syntax in the context of SELF"
-
-  (datum->syntax (pass-context self) datum))
-
 (define (pass-introduce self stx)
   (-> pass? syntax? syntax?)
   #:trace #f
