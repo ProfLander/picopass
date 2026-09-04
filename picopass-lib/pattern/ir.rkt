@@ -66,14 +66,16 @@
   (syntax-e (p-keyword-stx self)))
 
 ; List
-(struct p-list [stx list]
+(struct p-list [stx list tail]
   #:methods gen:custom-write
   [(%define (write-proc self port mode)
             ((if mode write display)
-             (let ([lst (p-list-list self)])
+             (let* ([lst (p-list-list self)]
+                    [tail (p-list-tail self)]
+                    [out (foldr cons (or tail null) lst)])
                (if mode
-                   lst
-                   (cons 'p-list lst)))
+                   out
+                   (cons 'p-list out)))
              port))])
 
 ; Repetition (... / ...+)
@@ -165,8 +167,10 @@
      (p-literal (replace ident))]
     [(p-keyword keyword)
      (p-keyword (replace keyword))]
-    [(p-list stx lst)
-     (p-list (replace stx) (map (curryr pattern-replace-context lctx) lst))]
+    [(p-list stx lst tail)
+     (p-list (replace stx) 
+             (map (curryr pattern-replace-context lctx) lst)
+             (and tail (pattern-replace-context tail lctx)))]
     [(p-repeat stx min)
      (p-repeat (replace stx) min)]))
 
@@ -182,10 +186,11 @@
     [(p-keyword keyword)
      (with-syntax ([keyword #`(quote-syntax #,keyword)])
        #'(p-keyword keyword))]
-    [(p-list stx lst)
+    [(p-list stx lst tail)
      (with-syntax ([stx #`(quote-syntax #,stx)]
-                   [(pat ...) (map pattern->syntax lst)])
-       #'(p-list stx (list pat ...)))]
+                   [(pat ...) (map pattern->syntax lst)]
+                   [tail (and tail (pattern->syntax tail))])
+       #'(p-list stx (list pat ...) tail))]
     [(p-repeat stx min)
      (with-syntax ([stx #`(quote-syntax #,stx)]
                    [min min])

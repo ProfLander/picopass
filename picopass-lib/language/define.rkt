@@ -62,7 +62,7 @@
       (log-picopass-info "define-language: ~a output:\n~a\n"
                          lang-name
                          (pretty-format (syntax->datum stx)
-                                        #:mode 'write))
+                                        #:mode 'print))
       stx))]
 
  ; Define a named language extending another,

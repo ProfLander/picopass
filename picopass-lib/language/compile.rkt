@@ -7,7 +7,10 @@
                        syntax/parse
                        picopass/logger)
 
+         racket/match
          racket/syntax
+
+         syntax/strip-context
 
          threading
 
@@ -126,10 +129,9 @@
   (-> language? non-terminal? pattern? syntax?)
   "compile PRODUCTION to syntax in context of NON-TERMINAL in LANGUAGE"
 
-  (cond
-    [(p-ident? production)
-     (let ([ident (p-ident-ident production)]
-           [literals (non-terminal-literals non-terminal)]
+  (match production
+    [(p-ident ident)
+     (let ([literals (non-terminal-literals non-terminal)]
            [datum-literals (non-terminal-datum-literals non-terminal)])
        (if (or (member ident literals datum=?)
                (member ident datum-literals datum=?))
@@ -137,24 +139,28 @@
            (with-syntax ([ident (language-introduce lang ident)])
              #'(~var _ ident))))]
 
-    [(p-literal? production)
-     (let ([ident (p-literal-ident production)])
-       (cond
-         [(datum=? #'~maybe ident)
-          #'~optional]
-         [(datum=? #'~cut ident)
-          #'~!]
-         [else
-          (language-introduce lang ident)]))]
+    [(p-literal literal)
+     (cond
+       [(datum=? #'~maybe literal)
+        #'~optional]
+       [(datum=? #'~cut literal)
+        #'~!]
+       [else
+        (language-introduce lang literal)])]
 
-    [(p-keyword? production)
-     (p-keyword-stx production)]
+    [(p-keyword keyword)
+     keyword]
 
-    [(p-list? production)
-     [datum->syntax (p-list-stx production)
-      (for/list ([pattern (in-list (p-list-list production))])
-        (compile-production lang non-terminal pattern))]]
+    [(p-list stx lst tail)
+     (let ([pats
+            (for/list ([pattern (in-list lst)])
+              (compile-production lang non-terminal pattern))]
+           [tail (and tail
+                      (compile-production lang non-terminal tail))])
+       (if tail
+           (datum->syntax stx (foldr cons tail pats))
+           (datum->syntax stx pats)))]
 
-    [(p-repeat? production)
-     (p-repeat-stx production)]))
+    [(p-repeat stx _min)
+     stx]))
 

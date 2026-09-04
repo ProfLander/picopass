@@ -42,12 +42,14 @@
   "convert the processor clause pattern PAT to a language non-terminal pattern"
 
   (match pat
-    [(p-list _stx (list (p-literal lit)
-                        ident))
+    [(p-list _stx (list (p-literal lit) ident) #f)
      #:when (datum=? lit #'~rec)
      (processor-clause-pattern->non-terminal-pattern ident)]
-    [(p-list stx lst)
-     (p-list stx (map processor-clause-pattern->non-terminal-pattern lst))]
+    [(p-list stx lst tail)
+     (p-list stx 
+             (map processor-clause-pattern->non-terminal-pattern lst)
+             (and tail
+                  (processor-clause-pattern->non-terminal-pattern tail)))]
     [(p-ident ident)
      (syntax-parse ident
        [ic:ident+class

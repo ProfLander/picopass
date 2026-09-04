@@ -36,14 +36,16 @@
            #:do [(log-picopass-debug "parse-pattern:\n~a"
                                      (pretty-format
                                        (syntax->datum this-syntax)))]
+
            #:attr struct (p-repeat this-syntax 0))
 
   (pattern (~datum ...+)
            #:do [(log-picopass-debug "parse-pattern:\n~a"
                                      (pretty-format
                                        (syntax->datum this-syntax)))]
+
            #:attr struct (p-repeat this-syntax 1))
-  
+
   (pattern kw:keyword
 
            #:do [(log-picopass-debug "parse-pattern:\n~a"
@@ -63,10 +65,25 @@
                              (p-ident this-syntax)))
 
   (pattern ((~var pat (parse-pattern literal?)) ...)
-           
+
            #:do [(log-picopass-debug "parse-pattern:\n~a"
                                      (pretty-format
                                        (syntax->datum this-syntax)))]
 
-           #:attr struct (p-list this-syntax (attribute pat.struct))))
+           #:attr struct (p-list this-syntax
+                                 (attribute pat.struct)
+                                 #f))
+
+  (pattern ((~var pat (parse-pattern literal?))
+            ...+
+            .
+            (~var tail (parse-pattern literal?)))
+           #:do [(log-picopass-debug "parse-pattern:\n~a"
+                                     (pretty-format
+                                       (syntax->datum this-syntax)))]
+
+           #:attr struct
+           (let* ([pats (attribute pat.struct)]
+                  [tail (attribute tail.struct)])
+             (p-list this-syntax pats tail))))
 

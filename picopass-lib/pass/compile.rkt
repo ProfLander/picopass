@@ -392,34 +392,38 @@
 
   (let ([lctx (pass-context pass)])
     (match pat
-      [(p-list stx lst)
-       (let-values
-         ([(patterns bodies)
-           (for/lists (_patterns _bodies)
-                      ([pattern (in-list lst)]
-                       #:when (match pattern
-                                [(p-literal ident)
-                                 #:when (datum=? #'~cut ident)
-                                 #f]
-                                [_ #t]))
-             (match pattern
-               [(p-list _stx (list (p-literal lit) pattern*))
-                #:when (datum=? #'~maybe lit)
-                (let ([clause (non-terminal-pattern->clause pass pattern*)])
-                  (with-syntax ([~? (quote-syntax ~?)]
-                                [tmp (generate-temporary)])
-                    (values (p-list lctx
-                                    (list (p-literal #'~optional)
-                                          (p-list lctx
-                                                  (list (p-literal #'~and)
-                                                        (p-ident #'tmp)
-                                                        (car clause)))))
-                            #'(~? tmp))))]
-               [_ (let ([clause (non-terminal-pattern->clause pass pattern)])
-                    (values (car clause)
-                            (cdr clause)))]))])
+      [(p-list stx lst tail)
+       (let ([tail (and tail
+                        (non-terminal-pattern->clause tail))])
+         (let-values
+           ([(patterns bodies)
+             (for/lists (_patterns _bodies)
+                        ([pattern (in-list lst)]
+                         #:when (match pattern
+                                  [(p-literal ident)
+                                   #:when (datum=? #'~cut ident)
+                                   #f]
+                                  [_ #t]))
+               (match pattern
+                 [(p-list _stx (list (p-literal lit) pattern*) #f)
+                  #:when (datum=? #'~maybe lit)
+                  (let ([clause (non-terminal-pattern->clause pass pattern*)])
+                    (with-syntax ([~? (quote-syntax ~?)]
+                                  [tmp (generate-temporary)])
+                      (values (p-list lctx
+                                      (list (p-literal #'~optional)
+                                            (p-list lctx
+                                                    (list (p-literal #'~and)
+                                                          (p-ident #'tmp)
+                                                          (car clause))))
+                                      #f)
+                              #'(~? tmp))))]
+                 [_ (let ([clause (non-terminal-pattern->clause pass pattern)])
+                      (values (car clause)
+                              (cdr clause)))]))])
 
-         (cons (p-list stx patterns) (datum->syntax stx bodies)))]
+           (cons (p-list stx patterns tail) 
+                 (datum->syntax stx bodies))))]
 
       [(p-ident ident)
        (let* ([input (pass-input pass)]
@@ -436,7 +440,8 @@
                     [ident (format-id lctx "~a:~a" tmp ident)])
                (cons (p-list ident
                              (list (p-literal #'~rec)
-                                   (p-ident ident)))
+                                   (p-ident ident))
+                             #f)
                      tmp))))]
 
       [(p-keyword stx)
@@ -456,16 +461,21 @@
   "compile the clause pattern PAT to syntax in the context of PASS"
 
   (match pat
-    [(p-list _stx (list (p-literal lit)
-                        (p-ident ident)))
+    [(p-list _stx (list (p-literal lit) (p-ident ident)) #f)
      #:when (datum=? lit #'~rec)
 
      (if (language? (pass-input pass))
          (compile-clause-pattern/syntax-rec pass ident)
          (compile-clause-pattern/match-rec pass ident))]
 
-    [(p-list stx lst)
-     (compile-clause-pattern/list pass stx lst)]
+    [(p-list stx lst tail)
+     [datum->syntax stx
+      (foldr cons
+             (if tail
+                 (compile-clause-pattern pass tail)
+                 null)
+             (for/list ([pattern (in-list lst)])
+               (compile-clause-pattern pass pattern)))]]
 
     [(p-ident ident)
      (syntax-parse ident
@@ -496,15 +506,6 @@
               class)])
 
     #`(~var #,ident #,class)))
-
-(define (compile-clause-pattern/list pass lctx lst)
-  (-> pass? syntax? (listof pattern?) syntax?)
-  "compile the list pattern LST to syntax in the syntactic context of LCTX
-   and compilation context of PASS"
-
-  [datum->syntax lctx
-   (for/list ([pattern (in-list lst)])
-     (compile-clause-pattern pass pattern))])
 
 (define (compile-clause-pattern/syntax-rec pass ident+class)
   (-> pass? syntax? syntax?)
