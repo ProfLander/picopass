@@ -6,6 +6,10 @@
 
 @title{Picopass}
 
+Picopass is an implementation of the Nanopass approach to compiler
+construction, designed around Racket syntax objects and built on Racket's
+existing pattern-matching facilities.
+
 @declare-exporting[picopass/base picopass #:use-sources (picopass/base)]
 
 @defmodule*/no-declare[(picopass/base)]{
@@ -18,37 +22,21 @@
   making it suitable for use as a language.
 }
 
-@section{Overview}
+Because Picopass operates directly on syntax objects, compiler and macro
+transformations can work with the same representation used by surrounding
+Racket syntax-processing tools. Syntax objects also preserve lexical context and
+scopes through transformations.
 
-Picopass is an implementation of the Nanopass approach to compiler
-construction, designed around Racket syntax objects and built on Racket's
-existing pattern-matching facilities.
+@section{Languages}
 
-A language definition describes the syntax of an intermediate representation.
+A picopass language describes the syntax of an intermediate representation.
 Languages can be extended incrementally, and passes specify transformations
 between them.
 
-Passes operate directly on Racket syntax objects. A pass validates its input
-against its source language, performs its transformation, and validates the
-result against its target language.
-
-Passes can also transform arbitrary Racket values. In this mode, predicates
-take the place of languages and non-terminals: they dispatch processors based
-on their inputs and assert that their outputs have the expected form, while
-@racketmodname[racket/match] provides the pattern matching that
-@racketmodname[syntax/parse] provides for syntax transformations.
-
-Because Picopass operates directly on syntax objects, compiler and macro
-transformations can work with the same representation used by surrounding
-Racket syntax-processing tools. Syntax objects also preserve lexical context,
-including scopes, through transformations.
-
-@section{The @racket[define-language] Form}
+@subsection{Defining a language}
 
 The @racket[define-language] form establishes the syntax of a language in
-terms of terminals and non-terminals, and defines a parser named
-@racketidfont{parse-}@racket[language-id] for validating syntax against the
-language.
+terms of terminals and non-terminals.
 
 @defform[#:literals (+ -)
 
@@ -101,8 +89,6 @@ language.
                              (pattern ...+ . pattern)
                              ...
                              ...+)]]
-
-@subsection{Defining a language}
 
 @racket[language-name] is the identifier bound to the language.
 
@@ -186,11 +172,25 @@ respective @racket[non-terminal-ident].
 This is useful in language composition, as it allows the terminals of one
 language to mention the non-terminals of another.
 
-@section{The @racket[define-pass] Form}
+@section{Passes}
 
-The @racket[define-pass] form defines a transformation between a source
-representation and a target representation. The representations may be
-languages or arbitrary Racket values described by predicates.
+A pass is a transformation between source and target representations.
+These representations may be languages or arbitrary Racket values
+described by predicates.
+
+Passes operate directly on Racket syntax objects. Input is validated
+against the source language, transformed, and the result is validated against
+the target language.
+
+Passes can also transform arbitrary Racket values. In this mode, predicates
+take the place of languages and non-terminals: they dispatch processors based
+on their inputs and assert that their outputs have the expected form, while
+@racketmodname[racket/match] provides the pattern matching that
+@racketmodname[syntax/parse] provides for syntax transformations.
+
+@subsection{Defining a pass}
+
+Passes are defined via the @racket[define-pass] form:
 
 @defform[#:literals (-> *)
 
@@ -229,8 +229,6 @@ languages or arbitrary Racket values described by predicates.
                              (~maybe pattern)
                              ...
                              ...+)]]
-
-@subsection{Defining a pass}
 
 @racket[pass-name] is the identifier bound to the pass.
 

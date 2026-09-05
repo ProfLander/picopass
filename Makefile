@@ -16,7 +16,7 @@ build-docs:
 	--no-install --no-post-install --pkgs $(PACKAGE-NAME)-doc
 
 build-standalone-docs:
-	scribble +m --redirect-main http://pkg-build.racket-lang.org/doc/ --html \
+	scribble +m --redirect-main http://pkg-build.racket-lang.org/doc/ --htmls \
 	--dest ./docs ./picopass-doc/scribblings/picopass.scrbl
 
 build-all:
