@@ -1,6 +1,6 @@
 #lang picopass
 
-(require picopass/lang/racket/module-path)
+(require picopass/lang/racket/base/module-path)
 
 (provide (all-defined-out))
 
@@ -11,7 +11,7 @@
               [export-id id]
               [prefix-id id]
               [exact-integer exact-integer]
-              [module-path module-path])
+              [module-path module-path-class])
 
  (top-level
    #:datum-literals [provide]
@@ -56,4 +56,6 @@
  (space
    id
    #f)]
+
+(define-language-parser parse-provide racket/provide)
 
