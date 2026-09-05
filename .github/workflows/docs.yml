@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - scribble-docs
     paths:
       - 'picopass-doc/scribblings/**'
       - '.github/workflows/docs.yml'
