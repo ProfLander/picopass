@@ -47,7 +47,7 @@
                  (~or *
                       output:id))
              clause:parse-processor-clause
-             ...+)
+             ...)
            #:do [(log-picopass-debug "parse-processor:\n~a"
                                      (pretty-format (syntax->datum this-syntax)))]
            #:attr struct (processor this-syntax
