@@ -23,10 +23,10 @@
 
 [define-language module-path
  #:entry-point module-path
- #:terminals ([id id]
-              [string string]
+ #:terminals (id
+              string
               [rel-string string]
-              [planet planet])
+              planet)
 
  (module-path
    #:datum-literals [submod]

@@ -16,16 +16,15 @@
    #:entry-point expr
    #:description "n-ary lambda"
 
-   #:terminals ([ident id]
-                [number number])
+   #:terminals [id number]
 
    (expr
      #:description "expression"
      #:datum-literals [begin abs app]
-     ident
+     id
      number
      (begin ~cut expr ...)
-     (abs ~cut (ident ...) expr)
+     (abs ~cut (id ...) expr)
      (app ~cut expr ...+))]
 
   (define-language-parser parse-L0 L0)
@@ -45,9 +44,9 @@
    #:description "unary lambda"
 
    (expr
-     (- (abs ~cut (ident ...) expr)
+     (- (abs ~cut (id ...) expr)
         (app ~cut expr ...+))
-     (+ (abs ~cut ident expr)
+     (+ (abs ~cut id expr)
         (app ~cut expr expr)))]
 
   (define-language-parser parse-L1 L1)
@@ -131,7 +130,7 @@
    [expr-abs
     (-> expr expr)
 
-    [(abs ~cut (arg:ident ...) (~rec body:expr))
+    [(abs ~cut (arg:id ...) (~rec body:expr))
      (for/fold ([acc (attribute body)])
                ([arg (in-list (reverse (attribute arg)))])
        #`(abs #,arg #,acc))]]
@@ -156,7 +155,7 @@
    [expr
     (-> expr string?)
 
-    [ident:ident
+    [ident:id
      (~a (syntax-e #'ident))]
 
     [number:number
@@ -166,7 +165,7 @@
      (~a (cons 'begin
                (map syntax-e (attribute body))))]
 
-    [(abs ~cut arg:ident (~rec body:expr))
+    [(abs ~cut arg:id (~rec body:expr))
      (format "(abs ~a ~a)" (syntax-e #'arg) (syntax-e #'body))]
 
     [(app ~cut (~rec proc:expr) (~rec arg:expr))

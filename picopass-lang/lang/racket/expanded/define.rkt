@@ -37,8 +37,7 @@
 
         [define-language name/expr
          #:entry-point expr
-         #:terminals ([id id]
-                      [datum datum])
+         #:terminals [id datum]
 
          (expr
            #:literals [#%plain-lambda
@@ -93,13 +92,13 @@
 
         [define-language name
          #:entry-point top-level-form
-         #:terminals ([id id]
+         #:terminals (id
                       [module-path module-path-class]
                       [raw-require-spec raw-require-spec-class]
                       [raw-provide-spec raw-provide-spec-class]
-                      [datum datum]
+                      datum
                       [expr expr-class]
-                      [declare declare])
+                      declare)
 
          (top-level-form
            #:literals [#%expression

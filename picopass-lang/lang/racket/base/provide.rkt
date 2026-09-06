@@ -6,11 +6,11 @@
 
 [define-language racket/provide
  #:entry-point top-level
- #:terminals ([id id]
+ #:terminals (id
               [orig-id id]
               [export-id id]
               [prefix-id id]
-              [exact-integer exact-integer]
+              exact-integer
               [module-path module-path-class])
 
  (top-level

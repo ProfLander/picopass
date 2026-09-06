@@ -60,7 +60,8 @@ terms of terminals and non-terminals.
                                       [#:terminals+ (terminal ...+)]
                                       non-terminal-delta ...))
 
-                    (terminal (name syntax-class))
+                    (terminal syntax-class
+                              (name syntax-class))
 
                     (non-terminal (name
                                     [#:description description-string]
@@ -100,8 +101,10 @@ language's entry point.
 @racket[#:description] overrides the language's generated description when
 reporting parse errors.
 
-@racket[#:terminals] clause defines the set of terminals available in the
-language. Each terminal associates an identifier with a syntax class.
+@racket[#:terminals] defines the set of terminals available in the
+language. Each @racket[terminal] associates an identifier with a syntax class:
+The @racket[syntax-class] form binds the terminal to the name of the class,
+while the @racket[(name syntax-class)] form allows binding an arbitrary name.
 
 @subsection{Extending a language}
 

@@ -64,11 +64,11 @@
 
 [define-language s-lua
  #:entry-point chunk
- #:terminals ([name name]
-              [number number]
-              [string string]
-              [vararg vararg]
-              [function-name function-name])
+ #:terminals [name
+              number
+              string
+              vararg
+              function-name]
 
  ; chunk ::=
  (chunk

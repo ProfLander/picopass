@@ -61,6 +61,15 @@
            #:attr struct
            (terminal this-syntax
                      #'name
+                     #'class))
+
+  (pattern class:id
+           #:do [(log-picopass-debug "parse-terminal:\n~a"
+                                     (pretty-format 
+                                       (syntax->datum this-syntax)))]
+           #:attr struct
+           (terminal this-syntax
+                     #'class
                      #'class)))
 
 (define-syntax-class parse-non-terminal
