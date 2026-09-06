@@ -7,13 +7,13 @@
 
 [define-language raw-require-spec
  #:entry-point raw-require-spec
- #:terminals ([id id]
+ #:terminals (id
               [portal-id id]
               [prefix-id id]
               [local-id id]
               [exported-id id]
               [content datum]
-              [exact-integer exact-integer]
+              exact-integer
               [raw-module-path raw-module-path-class])
 
  (raw-require-spec

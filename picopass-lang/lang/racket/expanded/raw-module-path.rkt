@@ -15,11 +15,11 @@
 
 [define-language raw-module-path
  #:entry-point raw-module-path
- #:terminals ([id id]
-              [string string]
+ #:terminals (id
+              string
               [rel-string string]
               [literal-path path]
-              [planet planet])
+              planet)
 
  (raw-module-path
    #:literals [submod]

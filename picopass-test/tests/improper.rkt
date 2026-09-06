@@ -7,7 +7,7 @@
 
   [define-language improper
    #:entry-point expr
-   #:terminals ([id id])
+   #:terminals [id]
    (expr
      (id ... . id))]
 
@@ -23,7 +23,7 @@
 
   [define-language proper
    #:entry-point expr
-   #:terminals ([id id])
+   #:terminals [id]
    (expr
      (id ...))]
 

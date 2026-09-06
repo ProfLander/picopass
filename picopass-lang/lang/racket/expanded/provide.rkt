@@ -7,15 +7,15 @@
 
 [define-language raw-provide-spec
  #:entry-point raw-provide-spec
- #:terminals ([id id]
+ #:terminals (id
               [local-id id]
               [export-id id]
               [struct-id id]
               [field-id id]
               [prefix-id id]
-              [exact-integer exact-integer]
+              exact-integer
               [raw-module-path raw-module-path-class]
-              [datum datum]
+              datum
               [orig-form datum])
 
  (raw-provide-spec
