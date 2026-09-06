@@ -8,6 +8,7 @@
 (require (for-syntax racket/base
                      syntax/parse)
 
+         picopass/syntax
          picopass/language/ir/terminal
          picopass/language/ir/non-terminal)
 
@@ -37,6 +38,18 @@
                    (cons 'scope-key (language-scope-key self)))
              port)]))
 
+(define (syntax-local-language ident failure)
+  (-> syntax? (-> any/c) (or/c language? any/c))
+  (let/ec return
+    (let ([language (syntax-local-value ident (compose return failure))])
+
+      (unless (language? language)
+        [raise-syntax-error 'define-language
+         (format "~a is not a language" (syntax-e ident))
+         ident])
+
+      language)))
+
 (define (language-name self)
   (-> language? symbol?)
   #:trace #f
@@ -50,6 +63,16 @@
   "return the syntactic context of SELF"
 
   (language-ident self))
+
+(define (language-non-terminal self ident)
+  (-> language? syntax? (or/c non-terminal? #f))
+  "return the non-terminal named by IDENT in SELF,
+   or #f if none exists"
+
+  (findf (λ (nt)
+           (datum=? ident
+                    (non-terminal-ident nt)))
+         (language-non-terminals self)))
 
 (define (language-introduce self stx)
   (-> language? syntax? syntax?)

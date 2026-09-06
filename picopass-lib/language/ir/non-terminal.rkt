@@ -90,26 +90,6 @@
                   datum-literals
                   productions)))
 
-(define (non-terminal=? a b)
-  (-> non-terminal? non-terminal? boolean?)
-  #:trace #f
-  "equality over non-terminals"
-
-  (and (datum=? (non-terminal-ident a)
-                (non-terminal-ident b))
-
-       (for/and ([a (in-list (non-terminal-literals a))]
-                 [b (in-list (non-terminal-literals b))])
-         (datum=? a b))
-
-       (for/and ([a (in-list (non-terminal-datum-literals a))]
-                 [b (in-list (non-terminal-datum-literals b))])
-         (datum=? a b))
-
-       (for/and ([a (in-list (non-terminal-productions a))]
-                 [b (in-list (non-terminal-productions b))])
-         (pattern=? a b))))
-
 (define (non-terminal->syntax self)
   (-> non-terminal? syntax?)
   

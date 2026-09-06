@@ -11,23 +11,15 @@
 (struct processor [stx
                    ident
                    input-ident
-                   input
                    output-ident
-                   output
                    clauses]
 
   #:methods gen:custom-write
   [(%define (write-proc self port _mode)
             (display (list 'processor
                            (list 'name (syntax->datum (processor-ident self)))
-                           (list 'input (let ([input (processor-input self)])
-                                          (if (syntax? input)
-                                              (syntax->datum input)
-                                              input)))
-                           (list 'output (let ([output (processor-output self)])
-                                           (if (syntax? output)
-                                               (syntax->datum output)
-                                               output)))
+                           (list 'input (syntax->datum (processor-input-ident self)))
+                           (list 'output (syntax->datum (processor-output-ident self)))
                            (cons 'clauses (processor-clauses self)))
                      port))])
 

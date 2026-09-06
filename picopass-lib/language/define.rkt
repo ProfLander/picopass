@@ -27,22 +27,6 @@
          (all-from-out picopass/logger)
          (all-defined-out))
 
-(define-for-syntax (syntax-local-language lctx ident)
-  (let ([language [syntax-local-value ident
-                   (thunk
-                     [raise-syntax-error 'define-language
-                      (format "unbound language ~a" (syntax-e ident))
-                      lctx
-                      ident])]])
-
-    (unless (language? language)
-      [raise-syntax-error 'define-language
-       (format "~a is not a language" (syntax-e ident))
-       lctx
-       #'delta.extends])
-
-    language))
-
 [define-syntax-parser define-language
  ; Define a named language with a given set of terminals,
  ; non-terminals, and specific entry point non-terminal
@@ -70,7 +54,11 @@
  ; and a potentially-rebound entry point
  [delta:parse-language-delta
 
-  (let ([base (syntax-local-language this-syntax #'delta.extends)])
+  (let ([base [syntax-local-language #'delta.extends
+               (thunk
+                 [raise-syntax-error 'define-language
+                  (format "unbound language ~a" (syntax-e #'delta.extends))
+                  #'delta.extends])]])
 
     (let* ([delta (attribute delta.struct)]
            [delta-name (language-delta-name delta)]
@@ -92,7 +80,11 @@
 [define-syntax-parser define-language-parser
  [(_ name:id language:id)
 
-  (define lang (syntax-local-language this-syntax #'language))
+  (define lang [syntax-local-language #'language
+                (thunk
+                  [raise-syntax-error 'define-language
+                   (format "unbound language ~a" (syntax-e #'language))
+                   #'language])])
 
   (let* ([stx (compile-language-parser #'name lang)])
     (log-picopass-info "define-language-parser ~a output:\n~a\n"
@@ -104,7 +96,11 @@
 [define-syntax-parser define-language-classes
  [(_ language:id [name:id class:id] ...)
 
-  (let* ([lang (syntax-local-language this-syntax #'language)]
+  (let* ([lang [syntax-local-language #'language
+                (thunk
+                  [raise-syntax-error 'define-language
+                   (format "unbound language ~a" (syntax-e #'language))
+                   #'language])]]
          [non-terminals (language-non-terminals lang)]
          [non-terminal-idents
           (for/list ([non-terminal (in-list non-terminals)])
