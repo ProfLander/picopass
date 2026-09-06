@@ -25,7 +25,7 @@
               (-> (~or * input:id)
                   (~or * output:id))
               processor:parse-processor
-              ...+)
+              ...)
            #:do [(log-picopass-debug "parse-pass:\n~a" 
                                      (pretty-format (syntax->datum this-syntax)))
                  (define introduce (make-syntax-introducer))
