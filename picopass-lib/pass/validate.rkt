@@ -110,14 +110,14 @@
 
     (when (language? input)
       (unless (language? output)
-        (let ([non-terminals (language-non-terminals input)])
-          (for ([non-terminal (in-list non-terminals)])
-            (unless (for/or ([processor (in-list (pass-processors pass))])
-                      (non-terminal=? non-terminal (processor-input processor)))
-              [raise-pass-error pass
-               (format "~a non-terminal ~a is not the input of any processor"
-                       (language-name input)
-                       (non-terminal-name non-terminal))])))))
+        (for ([non-terminal (in-list (language-non-terminals input))])
+          (unless (for/or ([processor (in-list (pass-processors pass))])
+                    (datum=? (non-terminal-ident non-terminal)
+                             (processor-input-ident processor)))
+            [raise-pass-error pass
+             (format "~a non-terminal ~a is not the input of any processor"
+                     (language-name input)
+                     (non-terminal-name non-terminal))]))))
 
     pass))
 
@@ -127,14 +127,15 @@
    (i.e. automatic clause generation is not taking place,)
    ensure each of its non-terminals is the output of at least one processor"
 
-  (let ([input (pass-input pass)] 
+  (let ([input (pass-input pass)]
         [output (pass-output pass)])
     (when (language? output)
       (unless (language? input)
         (let ([non-terminals (language-non-terminals output)])
           (for ([non-terminal (in-list non-terminals)])
             (unless (for/or ([processor (in-list (pass-processors pass))])
-                      (non-terminal=? non-terminal (processor-output processor)))
+                      (datum=? (non-terminal-ident non-terminal)
+                               (processor-output-ident processor)))
               [raise-pass-error pass
                (format "~a non-terminal ~a is not output by any processor"
                        (language-name output)
@@ -181,7 +182,8 @@
 
   (let ([pass-input (pass-input pass)])
     (when (language? pass-input)
-      (let ([input (processor-input processor)])
+      (let ([input (language-non-terminal pass-input
+                                          (processor-input-ident processor))])
         (unless input
           [raise-processor-error processor
            (format "invalid input non-terminal for language ~a"
@@ -209,8 +211,12 @@
   "if pass input is a language, ensure the output of SELF is a valid reference"
 
   (let ([pass-output (pass-output pass)])
+
     (when (language? pass-output)
-      (let ([output (processor-output processor)])
+
+      (let ([output (language-non-terminal pass-output
+                                           (processor-output-ident processor))])
+
         (unless output
           [raise-processor-error processor
            (format "invalid output non-terminal for language ~a"
@@ -251,21 +257,28 @@
       (validate-processor-clause/no-terminal-rec pass processor _)))
 
 (define (validate-processor-clause/valid-pattern pass processor clause)
-  (-> pass? processor? processor-clause? processor-clause?)
+  (-> pass? 
+      processor? 
+      processor-clause? 
+      processor-clause?)
+
   "ensure the pattern of SELF corresponds to an input language non-terminal"
 
-  (let* ([input (processor-input processor)])
+  (let ([pass-input (pass-input pass)])
 
-    (when (non-terminal? input)
-      (let* ([lang (pass-input pass)]
-             [productions (non-terminal-productions input)]
-             [pattern (processor-clause-pattern clause)]
-             [pattern (processor-clause-pattern->non-terminal-pattern pattern)])
+    (when (language? pass-input)
 
-        (unless (member pattern productions pattern=?)
-          [raise-processor-clause-invalid-pattern-error clause
-           (language-name lang)
-           (pattern-stx pattern)])))
+      (let ([input (language-non-terminal pass-input
+                                          (processor-input-ident processor))])
+
+        (let* ([productions (non-terminal-productions input)]
+               [pattern (processor-clause-pattern clause)]
+               [pattern (processor-clause-pattern->non-terminal-pattern pattern)])
+
+          (unless (member pattern productions pattern=?)
+            [raise-processor-clause-invalid-pattern-error clause
+             (language-name pass-input)
+             (pattern-stx pattern)]))))
 
     clause))
 

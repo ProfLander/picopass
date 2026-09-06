@@ -53,9 +53,7 @@
            #:attr struct (processor this-syntax
                                     (attribute name)
                                     (attribute input)
-                                    #f
                                     (attribute output)
-                                    #f
                                     (attribute clause.struct))))
 
 (define-syntax-class parse-processor-clause

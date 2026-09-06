@@ -7,15 +7,19 @@
 ; specific language forms, and a private definition scope
 
 (require (for-syntax racket/base
-                     syntax/parse))
+                     syntax/parse)
+
+         racket/function
+
+         picopass/language/ir/language)
 
 (provide (all-defined-out)
          (struct-out pass))
 
 (struct pass [stx
               ident
-              input
-              output
+              input-ident
+              output-ident
               processors
               self-ref
               scope]
@@ -24,14 +28,8 @@
   [(%define (write-proc self port _mode)
             (display (list 'pass
                            (list 'name (syntax->datum (pass-ident self)))
-                           (list 'input (let ([input (pass-input self)])
-                                          (if (syntax? input)
-                                              (syntax->datum input)
-                                              input)))
-                           (list 'output (let ([output (pass-output self)])
-                                           (if (syntax? output)
-                                               (syntax->datum output)
-                                               output)))
+                           (list 'input (syntax->datum (pass-input-ident self)))
+                           (list 'output (syntax->datum (pass-output-ident self)))
                            (cons 'processors (pass-processors self)))
                      port))])
 
@@ -48,6 +46,16 @@
   "return the syntactic context of SELF"
 
   (pass-ident self))
+
+(define (pass-input self)
+  (-> pass? (or/c language? syntax?))
+  (let ([input-ident (pass-input-ident self)])
+    (syntax-local-value input-ident (thunk input-ident))))
+
+(define (pass-output self)
+  (-> pass? (or/c language? syntax?))
+  (let ([output-ident (pass-output-ident self)])
+    (syntax-local-value output-ident (thunk output-ident))))
 
 (define (pass-introduce self stx)
   (-> pass? syntax? syntax?)

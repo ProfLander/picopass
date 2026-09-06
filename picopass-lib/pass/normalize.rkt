@@ -26,28 +26,24 @@
 
   (let* ([stx (pass-stx self)]
          [ident (pass-ident self)]
-         [input (pass-input self)]
-         [input (syntax-local-value input (thunk input))]
-         [output (pass-output self)]
-         [output (syntax-local-value output (thunk output))]
+         [input-ident (pass-input-ident self)]
+         [output-ident (pass-output-ident self)]
          [processors (pass-processors self)]
-         [processors (map (curryr normalize-processor input output)
+         [processors (map (curryr normalize-processor input-ident)
                           processors)]
          [self-ref (pass-self-ref self)]
          [scope (pass-scope self)])
     (pass stx
           ident
-          input
-          output
+          input-ident
+          output-ident
           processors
           self-ref
           scope)))
 
-(define (normalize-processor self pass-input pass-output)
-  (-> processor?
-      (or/c language? syntax?)
-      (or/c language? syntax?)
-      processor?)
+(define (normalize-processor self pass-input-ident)
+  (-> processor? syntax? processor?)
+
   "normalize SELF into compilable form,
    populating input and output references with the corresponding
    non-terminals from PASS-INPUT and PASS-OUTPUT each is a language"
@@ -56,35 +52,23 @@
          [ident (processor-ident self)]
 
          [input-ident (processor-input-ident self)]
-         [input (if (language? pass-input)
-                    (findf (λ (non-terminal)
-                             (datum=? input-ident
-                                      (non-terminal-ident non-terminal)))
-                           (language-non-terminals pass-input))
-                    input-ident)]
-
          [output-ident (processor-output-ident self)]
-         [output (if (language? pass-output)
-                     (findf (λ (non-terminal)
-                              (datum=? output-ident
-                                       (non-terminal-ident non-terminal)))
-                            (language-non-terminals pass-output))
-                     output-ident)]
 
-         [clauses (map (curryr normalize-processor-clause input)
-                       (processor-clauses self))])
+         [clauses (for/list ([clause (in-list (processor-clauses self))])
+                    (normalize-processor-clause clause 
+                                                pass-input-ident 
+                                                input-ident))])
 
     (processor stx
                ident
                input-ident
-               input
                output-ident
-               output
                clauses)))
 
-(define (normalize-processor-clause self processor-input)
+(define (normalize-processor-clause self pass-input processor-input)
   (-> processor-clause?
-      (or/c non-terminal? syntax? #f)
+      syntax?
+      syntax?
       processor-clause?)
   "normalize SELF into compilable form,
    converting literals and datum-literals in its pattern
@@ -93,11 +77,19 @@
   (let* ([stx (processor-clause-stx self)]
 
          [pattern (processor-clause-pattern self)]
+
+         [pass-input-lang (syntax-local-language pass-input
+                                                 (thunk #f))]
+
          [pattern
-          (if (non-terminal? processor-input)
-              (normalize-pattern pattern
-                                 (non-terminal-literals processor-input)
-                                 (non-terminal-datum-literals processor-input))
+          (if pass-input-lang
+              (let ([processor-input-nt
+                     (language-non-terminal pass-input-lang
+                                            processor-input)])
+                (normalize-pattern
+                  pattern
+                  (non-terminal-literals processor-input-nt)
+                  (non-terminal-datum-literals processor-input-nt)))
               pattern)]
 
          [body (processor-clause-body self)])
