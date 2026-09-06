@@ -64,6 +64,16 @@
 
   (language-ident self))
 
+(define (language-non-terminal self ident)
+  (-> language? syntax? (or/c non-terminal? #f))
+  "return the non-terminal named by IDENT in SELF,
+   or #f if none exists"
+
+  (findf (λ (nt)
+           (datum=? ident
+                    (non-terminal-ident nt)))
+         (language-non-terminals self)))
+
 (define (language-introduce self stx)
   (-> language? syntax? syntax?)
   #:trace #f
