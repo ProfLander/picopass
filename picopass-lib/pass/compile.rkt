@@ -219,9 +219,14 @@
 
   (let* ([pass-input (pass-input pass)]
          [processors (pass-processors pass)]
-         [unique-input-idents (remove-duplicates
-                                (map processor-input-ident processors)
-                                datum=?)]
+         [unique-input-idents
+          (if (language? pass-input)
+              (for/list ([non-terminal (in-list (language-non-terminals pass-input))])
+                (replace-context (pass-context pass)
+                                 (non-terminal-ident non-terminal)))
+              (remove-duplicates
+                (map processor-input-ident processors)
+                datum=?))]
 
          [input-handlers (map make-input-handler unique-input-idents)]
 
