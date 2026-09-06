@@ -26,10 +26,7 @@
         (parse-test #'1234))))
 
   [define-pass test->syntax
-   (-> test syntax?)
-
-   (top-level
-     (-> top-level syntax?))]
+   (-> test syntax?)]
 
   (test-case "test->syntax ident"
     (check-not-exn
