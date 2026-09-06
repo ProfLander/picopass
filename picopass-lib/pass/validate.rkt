@@ -35,7 +35,6 @@
       (validate-pass/bound-output)
       (validate-pass/unique-processors)
       (validate-pass/singular-empty-processors)
-      (validate-pass/input-coverage)
       (validate-pass/output-coverage)
       (validate-pass/valid-processors)))
 
@@ -97,27 +96,6 @@
         [raise-pass-error pass
          "redundant empty processor"
          (processor-stx empty)]))
-
-    pass))
-
-(define (validate-pass/input-coverage pass)
-  (-> pass? (or/c pass? none/c))
-  "when the input of SELF is a language and the output is not,
-   (i.e. automatic clause generation is not taking place,)
-   ensure each of its non-terminals is the input of at least one processor"
-  (let ([input (pass-input pass)] 
-        [output (pass-output pass)])
-
-    (when (language? input)
-      (unless (language? output)
-        (for ([non-terminal (in-list (language-non-terminals input))])
-          (unless (for/or ([processor (in-list (pass-processors pass))])
-                    (datum=? (non-terminal-ident non-terminal)
-                             (processor-input-ident processor)))
-            [raise-pass-error pass
-             (format "~a non-terminal ~a is not the input of any processor"
-                     (language-name input)
-                     (non-terminal-name non-terminal))]))))
 
     pass))
 
