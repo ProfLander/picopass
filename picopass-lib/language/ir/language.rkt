@@ -8,6 +8,7 @@
 (require (for-syntax racket/base
                      syntax/parse)
 
+         picopass/syntax
          picopass/language/ir/terminal
          picopass/language/ir/non-terminal)
 
@@ -36,6 +37,18 @@
                    (cons 'non-terminals (language-non-terminals self))
                    (cons 'scope-key (language-scope-key self)))
              port)]))
+
+(define (syntax-local-language ident failure)
+  (-> syntax? (-> any/c) (or/c language? any/c))
+  (let/ec return
+    (let ([language (syntax-local-value ident (compose return failure))])
+
+      (unless (language? language)
+        [raise-syntax-error 'define-language
+         (format "~a is not a language" (syntax-e ident))
+         ident])
+
+      language)))
 
 (define (language-name self)
   (-> language? symbol?)
