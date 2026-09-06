@@ -34,6 +34,7 @@
       (validate-pass/bound-input)
       (validate-pass/bound-output)
       (validate-pass/unique-processors)
+      (validate-pass/singular-empty-processors)
       (validate-pass/input-coverage)
       (validate-pass/output-coverage)
       (validate-pass/valid-processors)))
@@ -74,6 +75,29 @@
       [raise-pass-error pass
        "duplicate processor name"
        duplicate])
+    pass))
+
+(define (validate-pass/singular-empty-processors pass)
+  (-> pass? (or/c pass? none/c))
+  "ensure any empty processors in SELF
+   do not share an input with another processor"
+
+  (define (processor-empty? processor)
+    (-> processor? boolean?)
+    (null? (processor-clauses processor)))
+
+  (let* ([processors (pass-processors pass)] 
+         [empty-processors (reverse (filter processor-empty? processors))])
+    (for ([empty (in-list empty-processors)])
+      (when (findf (λ (processor)
+                     (and (not (eq? processor empty))
+                          (datum=? (processor-input-ident empty)
+                                   (processor-input-ident processor))))
+                   processors)
+        [raise-pass-error pass
+         "redundant empty processor"
+         (processor-stx empty)]))
+
     pass))
 
 (define (validate-pass/input-coverage pass)
