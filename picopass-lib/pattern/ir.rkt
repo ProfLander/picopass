@@ -36,14 +36,14 @@
   #:methods gen:custom-write
   [(%define (write-proc self port mode)
             ((if mode write display)
-             (let ([name (p-literal-name self)])
+             (let ([datum (p-literal-datum self)])
                (if mode
-                   name
-                   (list 'p-literal name)))
+                   datum
+                   (list 'p-literal datum)))
              port))])
 
-(define (p-literal-name self)
-  (-> p-literal? symbol?)
+(define (p-literal-datum self)
+  (-> p-literal? any/c)
   #:trace #f
   "return the symbolic name of SELF"
 
