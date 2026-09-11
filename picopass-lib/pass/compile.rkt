@@ -447,7 +447,8 @@
        (cons (p-keyword stx) stx)]
 
       [(p-literal ident)
-       (cons (p-ident ident) ident)]
+       (let ([ident (replace-context (pass-context pass) ident)])
+         (cons (p-ident ident) ident))]
 
       [(p-repeat stx _min)
        (cons (p-repeat stx 0)
