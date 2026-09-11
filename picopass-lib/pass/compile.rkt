@@ -431,8 +431,9 @@
                       (datum=? (terminal-ident/name terminal) ident))
                     terminals)
 
-             (cons (p-ident (format-id lctx "~a:~a" ident ident))
-                   (format-id lctx "~a" ident))
+             (let* ([tmp (format-id lctx "~a" (generate-temporary ident))])
+               (cons (p-ident (format-id lctx "~a:~a" tmp ident))
+                     tmp))
 
              (let* ([tmp (format-id lctx "~a" (generate-temporary ident))]
                     [ident (format-id lctx "~a:~a" tmp ident)])
