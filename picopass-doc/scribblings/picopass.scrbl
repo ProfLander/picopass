@@ -173,8 +173,31 @@ the original syntax unmodified.
 Binds the supplied @racket[name]s to syntax classes corresponding to the
 respective @racket[non-terminal-ident].
 
-This is useful in language composition, as it allows the terminals of one
-language to mention the non-terminals of another.
+@subsection{Deriving a language}
+
+The @racket[derive-language] form generates a language from a supported
+third-party grammar definition, enabling the use of picopass machinery
+without the need for excess boilerplate.
+
+@defform[(derive-language language-name
+           derive-clause
+           target-form)
+
+         #:grammar [(derive-clause (code:line
+                                     #:entry-point non-terminal-ident
+                                     [#:description description-string]))
+                    (target-form syntax-spec)]]
+
+@racket[language-name], @racket[#:entry-point], and @racket[#:description]
+behave in the same way as their @racket[define-language] counterparts.
+
+Currently, the only supported @racket[target-form] is @racket[syntax-spec],
+where @racket[binding-class] forms correspond to @racket[id] terminals,
+and @racket[nonterminal], @racket[nonterminal/nesting], and
+@racket[nonterminal/exporting] map to @racket[id] non-terminals,
+whose productions will generate terminal entries for referenced syntax classes,
+and @racket[#:datum-literals] for list-head identifiers and explicit
+@racket[~datum] patterns.
 
 @section{Passes}
 
