@@ -88,6 +88,7 @@ terms of terminals and non-terminals.
                              (~maybe pattern)
                              (pattern ...)
                              (pattern ...+ . pattern)
+                             #(pattern ...)
                              ...
                              ...+)]]
 
@@ -141,9 +142,9 @@ form.
 
 The @racket[pattern] clause may contain boolean / number / string data, terminal
 or non-terminal identifiers, literals, keywords, proper and improper lists of
-nested patterns, @racket[~maybe] whose child pattern may appear zero or one
-times, a zero-or-more repetition @racket[...], or a one-or-more repetition
-@racket[...+].
+nested patterns, vector literals of patterns, @racket[~maybe] whose child
+pattern may appear zero or one times, a zero-or-more repetition @racket[...],
+or a one-or-more repetition @racket[...+].
 
 @subsubsection{Production ordering}
 
@@ -228,6 +229,7 @@ Passes are defined via the @racket[define-pass] form:
                              ident
                              (pattern ...)
                              (pattern ...+ . pattern)
+                             #(pattern ...)
                              (~rec ident)
                              (~maybe pattern)
                              ...

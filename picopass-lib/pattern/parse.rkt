@@ -24,7 +24,8 @@
   (pattern (~or #f
                 #t
                 num:number
-                str:string)
+                str:string
+                #((~var pat (parse-pattern literal?)) ...))
 
            #:do [(log-picopass-debug "parse-pattern:\n~a"
                                      (pretty-format
