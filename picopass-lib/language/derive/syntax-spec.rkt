@@ -124,7 +124,12 @@
   (pattern (~datum ...+)
            #:with picopass this-syntax)
 
-  (pattern ((~datum literal) id (~optional (~seq #:space _)))
+  (pattern ((~datum ~literal) id (~optional (~seq #:space _)))
+           #:do [(non-terminal-spec-add-literal! non-terminal-spec
+                                                 #'id)]
+           #:with picopass #'id)
+
+  (pattern ((~datum ~datum) id)
            #:do [(non-terminal-spec-add-datum-literal! non-terminal-spec
                                                        #'id)]
            #:with picopass #'id)
