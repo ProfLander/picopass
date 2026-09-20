@@ -4,7 +4,10 @@
          (for-syntax (all-defined-out)))
 
 (define reserved-symbols
-  (list '=
+  (list '#%return
+        '#%vararg
+
+        '=
         'break
         'goto
         'do
@@ -14,7 +17,6 @@
         'if
         'for
         'function
-        'local-function
         'vararg
         'local
         'then
@@ -51,7 +53,7 @@
            "reserved name"))
 
 (define-syntax-class vararg
-  (pattern (~datum ...)))
+  (pattern (~datum #%vararg)))
 
 ; funcname ::=
 (define-syntax-class function-name
@@ -75,97 +77,91 @@
  ; chunk ::=
  (chunk
   #:datum-literals [#%chunk]
-  (#%chunk block))
+  (#%chunk ~cut block))
 
  ; block ::=
  (block
   #:datum-literals [#%block]
-  (#%block
+  (#%block ~cut
    statement ...
    (~maybe return-statement)))
 
  ; stat ::=
  (statement
-   #:datum-literals [=
-                     break
-                     goto
-                     do
-                     while
-                     repeat
-                     until
-                     if
-                     for
-                     function
-                     local-function
-                     local]
+   #:datum-literals [#%assign
+                     #%label
+                     #%break
+                     #%goto
+                     #%do
+                     #%while
+                     #%repeat
+                     #%until
+                     #%if
+                     #%for
+                     #%local]
 
-   (= ~cut [var ...] [expr ...])
-
-   function-call
-   label
-   (break)
-   (goto ~cut name)
-   (do ~cut block)
-   (while ~cut expr block)
-   (repeat ~cut block (until ~cut expr))
+   (#%assign ~cut [var ...] [expr ...])
+   (#%label ~cut name)
+   (#%break)
+   (#%goto ~cut name)
+   (#%do ~cut block)
+   (#%while ~cut expr block)
+   (#%repeat ~cut block (#%until ~cut expr))
 
    ; if - subforms handle block inlining
-   (if ~cut expr
-       if/then
-       if/elseif
-       ...
-       if/else)
+   (#%if ~cut expr
+         if/then
+         if/elseif
+         ...
+         if/else)
 
    ; for name = exp, exp [, exp]
-   (for (name expr expr (~maybe expr))
+   (#%for (name expr expr (~maybe expr))
      block)
 
    ; for-in
-   (for ([name expr] ...)
+   (#%for ([name expr] ...)
      block)
 
    ; function - subform handles block inlining
    statement/function
 
-   (local [var ...])
-   (local [var ...] [expr ...])
+   (#%local [var ...])
+   (#%local [var ...] [expr ...])
 
    ; local function - subform handles block inlining
-   (local statement/function))
+   (#%local statement/function)
+
+   function-call)
 
  ; if subforms
  (if/then
    #:description "then"
-   #:datum-literals [then]
-   (then ~cut block))
+   #:datum-literals [#%then]
+   (#%then ~cut block))
 
  (if/elseif
    #:description "elseif"
-   #:datum-literals [elseif]
-   (elseif ~cut expr if/then))
+   #:datum-literals [#%elseif]
+   (#%elseif ~cut expr if/then))
 
  (if/else
    #:description "else"
-   #:datum-literals [else]
-   (else ~cut block))
+   #:datum-literals [#%else]
+   (#%else ~cut block))
 
  ; function subforms
  (statement/function
    #:description "function"
-   #:datum-literals [function]
-   (function ~cut (function-name name ... (~maybe vararg))
+   #:datum-literals [#%function]
+   (#%function ~cut (function-name name ... (~maybe vararg))
              block))
 
  ; retstat ::=
  (return-statement
    #:description "return"
-   #:datum-literals [return]
-   (return ~cut expr ...))
-
- ; label ::=
- (label
-   #:datum-literals [::]
-   (:: ~cut name))
+   #:datum-literals [#%return]
+   (#%return ~cut expr ...))
 
  ; varlist - inlined into parent forms
 
@@ -174,10 +170,10 @@
  ; [] has same semantic with different target, replaced with ->
  (var
    #:description "variable"
-   #:datum-literals [->]
+   #:datum-literals [#%member]
    name
-   (-> prefix-expr name)
-   (-> prefix-expr expr))
+   (#%member prefix-expr name)
+   (#%member prefix-expr expr))
 
  ; namelist - inlined into parent forms
 
@@ -186,17 +182,17 @@
  ; exp ::=
  (expr
    #:description "expression"
-   #:datum-literals [nil]
-   nil
+   #:datum-literals [#%nil]
+   #%nil
    boolean
    number
    string
    vararg
    function-definition
-   prefix-expr
    table
    (unary-op expr)
-   (binary-op expr ~cut expr))
+   (binary-op expr ~cut expr)
+   prefix-expr)
 
  ; prefixexp ::=
  (prefix-expr
@@ -218,9 +214,9 @@
  ; functiondef ::=
  (function-definition
    #:description "function definition"
-   #:datum-literals [function]
-   (function ~cut (name ... (~maybe vararg))
-             block))
+   #:datum-literals [#%function]
+   (#%function ~cut (name ... (~maybe vararg))
+               block))
 
  ; funcbody - inlined into parent forms
 
@@ -228,8 +224,8 @@
 
  ; tableconstructor ::=
  (table
-   #:datum-literals [table]
-   (table ~cut table-field ...))
+   #:datum-literals [#%table]
+   (#%table ~cut table-field ...))
 
  ; fieldlist - inlined into table
 
@@ -244,16 +240,47 @@
 
  ; binop ::=
  (binary-op
-   #:description "binary operator"
-   #:datum-literals [+ - * / ^ % .. < <= > >= == ~= and or]
-   + - * / ^ % .. < <= > >= == ~= and or)
+  #:description "binary operator"
+  #:datum-literals [#%add
+                    #%sub
+                    #%mul
+                    #%div
+                    #%exp
+                    #%mod
+                    #%cat
+                    #%lt
+                    #%le
+                    #%gt
+                    #%ge
+                    #%eq
+                    #%ne
+                    #%and
+                    #%or]
+  #%add
+  #%sub
+  #%mul
+  #%div
+  #%exp
+  #%mod
+  #%cat
+  #%lt
+  #%le
+  #%gt
+  #%ge
+  #%eq
+  #%ne
+  #%and
+  #%or)
 
  ; unop ::=
- ; # is reserved in racket, replaced with length
  (unary-op
-   #:description "unary operator"
-   #:datum-literals [- not length]
-   - not length)]
+  #:description "unary operator"
+  #:datum-literals [#%neg
+                    #%not
+                    #%length]
+  #%neg
+  #%not
+  #%length)]
 
 (define-language-parser parse-s-lua s-lua)
 

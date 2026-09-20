@@ -22,16 +22,16 @@
     (if (pair? module-requires)
         (with-syntax ([([require-target require-target-str] ...)
                        module-requires])
-          #'[(local [require-target ...]
-               [(require require-target-str) ...])])
+          #'[(#%local [require-target ...]
+                      [(require require-target-str) ...])])
         #'[]))
 
   (define member-binding
     (if (pair? member-requires)
         (with-syntax ([([[require-id-target require-id] ...] ...)
                        member-requires])
-          #'[(local [require-id ... ...]
-               [(-> require-id-target require-id) ... ...])])
+          #'[(#%local [require-id ... ...]
+                      [(#%member require-id-target require-id) ... ...])])
         #'[]))
 
   (syntax-parse body
@@ -63,9 +63,9 @@
 
            body ...
 
-           (return (table
-                    [module-provide module-provide]
-                    ...)))))]))
+           (#%return (#%table
+                      [module-provide module-provide]
+                      ...)))))]))
 
 (define (make-package-preloader name body)
   "Return an S-Lua statement that injects BODY into package.preload
@@ -74,10 +74,9 @@
   (syntax-parse body
     [((~datum #%chunk)
       ((~datum #%block) body ...))
-     (with-syntax ([ooo (quote-syntax ...)])
-
-       #`(= [(-> (-> package preload) #,name)]
-            [(function (ooo)
-                       (#%block
-                        body ...))]))]))
+     #`(#%assign [(#%member (#%member package preload)
+                            #,name)]
+                 [(#%function (#%vararg)
+                              (#%block
+                               body ...))])]))
 

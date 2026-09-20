@@ -31,13 +31,13 @@
  (chunk
    (-> chunk string?)
 
-   [(#%chunk (~rec block:block))
+   [(#%chunk ~cut (~rec block:block))
     (syntax-e (attribute block))])
 
  (block
    (-> block string?)
 
-   [(#%block
+   [(#%block ~cut
      (~rec stmt:statement) ...
      (~maybe (~rec ret:return-statement)))
     (format-body (attribute stmt)
@@ -47,45 +47,42 @@
  (statement
    (-> statement string?)
 
-   [(= ~cut [(~rec var:var) ...] [(~rec exp:expr) ...])
+   [(#%assign ~cut [(~rec var:var) ...] [(~rec exp:expr) ...])
     (format "~a = ~a"
             (string-join (map syntax-e (attribute var)) ", ")
             (string-join (map syntax-e (attribute exp)) ", "))]
 
-   [(~rec call:function-call)
-    (syntax-e (attribute call))]
-
-   [(~rec label:label)
-    (syntax-e (attribute label))]
-
-   [(break)
+   [(#%break)
     "break"]
 
-   [(goto ~cut name:name)
+   [(#%label ~cut name:name)
+    (format "::~a::" (syntax-e (attribute name)))]
+
+   [(#%goto ~cut name:name)
     (format "goto ~a" (syntax-e (attribute name)))]
 
-   [(do ~cut (~rec b:block))
+   [(#%do ~cut (~rec b:block))
     (format "do~a\nend"
             (indent (syntax-e (attribute b))))]
 
-   [(while ~cut (~rec cond:expr)
+   [(#%while ~cut (~rec cond:expr)
            (~rec b:block))
     (format "while ~a do~a\nend"
             (syntax-e (attribute cond))
             (indent (format-block (syntax-e (attribute b)))))]
 
-   [(repeat ~cut
+   [(#%repeat ~cut
             (~rec b:block)
-            (until ~cut (~rec cond:expr)))
+            (#%until ~cut (~rec cond:expr)))
     (format "repeat~a\nuntil ~a"
             (indent (format-block (syntax-e (attribute b))))
             (syntax-e (attribute cond)))]
 
-   [(if ~cut (~rec cond:expr)
-        (~rec then:if/then)
-        (~rec elseif:if/elseif)
-        ...
-        (~rec else:if/else))
+   [(#%if ~cut (~rec cond:expr)
+          (~rec then:if/then)
+          (~rec elseif:if/elseif)
+          ...
+          (~rec else:if/else))
     (format "if ~a ~a~a~a\nend"
             (syntax-e (attribute cond))
             (syntax-e (attribute then))
@@ -96,7 +93,7 @@
                          "\n")
             (string-append "\n" (syntax-e (attribute else))))]
 
-   [(for (name:name (~rec from:expr)
+   [(#%for (name:name (~rec from:expr)
                     (~rec to:expr)
                     (~maybe (~rec step:expr)))
       (~rec b:block))
@@ -109,7 +106,7 @@
                 "")
             (indent (format-block (syntax-e (attribute b)))))]
 
-   [(for ([name:name (~rec exp:expr)] ...)
+   [(#%for ([name:name (~rec exp:expr)] ...)
       (~rec b:block))
     (format "for ~a in ~a do~a\nend"
             (string-join (map (compose symbol->string syntax-e) (attribute name)) ", ")
@@ -119,29 +116,32 @@
    [(~rec stat:statement/function)
     (syntax-e (attribute stat))]
 
-   [(local [(~rec var:var) ...])
+   [(#%local [(~rec var:var) ...])
     (format "local ~a"
             (string-join (map syntax-e (attribute var)) ", "))]
 
-   [(local [(~rec var:var) ...] [(~rec exp:expr) ...])
+   [(#%local [(~rec var:var) ...] [(~rec exp:expr) ...])
     (format "local ~a = ~a"
             (string-join (map syntax-e (attribute var)) ", ")
             (string-join (map syntax-e (attribute exp)) ", "))]
 
-   [(local (~rec func:statement/function))
-    (format "local ~a" (syntax-e (attribute func)))])
+   [(#%local (~rec func:statement/function))
+    (format "local ~a" (syntax-e (attribute func)))]
+
+   [(~rec call:function-call)
+    (syntax-e (attribute call))])
 
  (if/then
    (-> if/then string?)
 
-   [(then ~cut (~rec b:block))
+   [(#%then ~cut (~rec b:block))
     (format "then~a"
             (indent (format-block (syntax-e (attribute b)))))])
 
  (if/elseif
    (-> if/elseif string?)
 
-   [(elseif ~cut (~rec exp:expr) (~rec then:if/then))
+   [(#%elseif ~cut (~rec exp:expr) (~rec then:if/then))
     (format "elseif ~a ~a"
             (syntax-e (attribute exp))
             (syntax-e (attribute then)))])
@@ -149,14 +149,14 @@
  (if/else
    (-> if/else string?)
 
-   [(else ~cut (~rec b:block))
+   [(#%else ~cut (~rec b:block))
     (format "else~a"
             (indent (format-block (syntax-e (attribute b)))))])
 
  (statement/function
    (-> statement/function string?)
 
-   [(function ~cut (name:function-name arg:name ... (~maybe vararg:vararg))
+   [(#%function ~cut (name:function-name arg:name ... (~maybe vararg:vararg))
               (~rec b:block))
     (format "function ~a(~a)~a\nend"
             (syntax-e (attribute name))
@@ -171,7 +171,7 @@
  (return-statement
    (-> return-statement string?)
 
-   [(return ~cut (~rec exp:expr) ...)
+   [(#%return ~cut (~rec exp:expr) ...)
     (format "return~a~a"
             (if (pair? (attribute exp))
                 " "
@@ -179,28 +179,22 @@
             (string-join (map syntax-e (attribute exp))
                          ", "))])
 
- (label
-   (-> label string?)
-
-   [(:: ~cut name:name)
-    (format "::~a::" (syntax-e (attribute name)))])
-
  (var
    (-> var string?)
 
    [name:name
     (symbol->string (attribute name.symbol))]
 
-   [(-> (~rec exp:prefix-expr) field:name)
+   [(#%member (~rec exp:prefix-expr) field:name)
     (format "~a.~a" (syntax-e #'exp) (syntax-e #'field))]
 
-   [(-> (~rec exp:prefix-expr) (~rec field:expr))
+   [(#%member (~rec exp:prefix-expr) (~rec field:expr))
     (format "~a[~a]" (syntax-e #'exp) (syntax-e #'field))])
 
  (expr
    (-> expr string?)
 
-   [nil
+   [#%nil
     "nil"]
 
    [b:boolean
@@ -223,9 +217,6 @@
    [(~rec tbl:table)
     (syntax-e (attribute tbl))]
 
-   [(~rec prefix:prefix-expr)
-    (syntax-e (attribute prefix))]
-
    [((~rec unop:unary-op) (~rec exp:expr))
     (let ([op-sym (syntax-e (attribute unop))])
       (format "~a~a~a"
@@ -239,7 +230,10 @@
     (format "~a ~a ~a"
             (syntax-e (attribute a))
             (syntax-e (attribute binop))
-            (syntax-e (attribute b)))])
+            (syntax-e (attribute b)))]
+
+   [(~rec prefix:prefix-expr)
+    (syntax-e (attribute prefix))])
 
  (prefix-expr
    (-> prefix-expr string?)
@@ -275,7 +269,7 @@
  (function-definition
    (-> function-definition string?)
 
-   [(function ~cut (arg:name ... (~maybe vararg:vararg))
+   [(#%function ~cut (arg:name ... (~maybe vararg:vararg))
               (~rec b:block))
     (format "function(~a)~a\nend"
             (string-join (append (map (compose symbol->string syntax-e) (attribute arg))
@@ -289,7 +283,7 @@
  (table
    (-> table string?)
 
-   [(table ~cut (~rec field:table-field) ...)
+   [(#%table ~cut (~rec field:table-field) ...)
     (format "{~a}" (string-join (map syntax-e (attribute field))
                                 ", "))])
 
@@ -312,26 +306,26 @@
  (binary-op
    (-> binary-op string?)
 
-   [+ "+"]
-   [- "-"]
-   [* "*"]
-   [/ "/"]
-   [^ "^"]
-   [% "%"]
-   [.. ".."]
-   [< "<"]
-   [<= "<="]
-   [> ">"]
-   [>= ">="]
-   [== "=="]
-   [~= "~="]
-   [and "and"]
-   [or "or"])
+   [#%add "+"]
+   [#%sub "-"]
+   [#%mul "*"]
+   [#%div "/"]
+   [#%exp "^"]
+   [#%mod "%"]
+   [#%cat ".."]
+   [#%lt "<"]
+   [#%le "<="]
+   [#%gt ">"]
+   [#%ge ">="]
+   [#%eq "=="]
+   [#%ne "~="]
+   [#%and "and"]
+   [#%or "or"])
 
  (unary-op
    (-> unary-op string?)
 
-   [- "-"]
-   [not "not"]
-   [length "#"])]
+   [#%neg "-"]
+   [#%not "not"]
+   [#%length "#"])]
 
