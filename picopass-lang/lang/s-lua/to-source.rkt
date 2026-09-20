@@ -7,6 +7,11 @@
 (define (indent str)
   (string-replace str "\n" "\n  "))
 
+(define (format-block block)
+  (if (string=? "" block)
+      block
+      (format "\n~a" block)))
+
 (define (format-body stmts ret
                      #:leading-newline [leading-newline #t])
   (string-join (append (if (and leading-newline
@@ -26,14 +31,15 @@
  (chunk
    (-> chunk string?)
 
-   [(~rec block:block)
+   [(#%chunk (~rec block:block))
     (syntax-e (attribute block))])
 
  (block
    (-> block string?)
 
-   [[(~rec stmt:statement) ...
-     (~maybe (~rec ret:return-statement))]
+   [(#%block
+     (~rec stmt:statement) ...
+     (~maybe (~rec ret:return-statement)))
     (format-body (attribute stmt)
                  (attribute ret)
                  #:leading-newline #f)])
@@ -58,31 +64,28 @@
    [(goto ~cut name:name)
     (format "goto ~a" (syntax-e (attribute name)))]
 
-   [(do ~cut (~rec stmt:statement) ...
-      (~maybe (~rec ret:return-statement)))
+   [(do ~cut (~rec b:block))
     (format "do~a\nend"
-            (indent (format-body (attribute stmt) (attribute ret))))]
+            (indent (syntax-e (attribute b))))]
 
    [(while ~cut (~rec cond:expr)
-           (~rec stmt:statement) ...
-           (~maybe (~rec ret:return-statement)))
+           (~rec b:block))
     (format "while ~a do~a\nend"
             (syntax-e (attribute cond))
-            (indent (format-body (attribute stmt) (attribute ret))))]
+            (indent (format-block (syntax-e (attribute b)))))]
 
    [(repeat ~cut
-            (~rec stmt:statement) ...
-            (~maybe (~rec ret:return-statement))
+            (~rec b:block)
             (until ~cut (~rec cond:expr)))
     (format "repeat~a\nuntil ~a"
-            (indent (format-body (attribute stmt) (attribute ret)))
+            (indent (format-block (syntax-e (attribute b))))
             (syntax-e (attribute cond)))]
 
    [(if ~cut (~rec cond:expr)
-        (~rec then:statement/if/then)
-        (~rec elseif:statement/if/elseif)
+        (~rec then:if/then)
+        (~rec elseif:if/elseif)
         ...
-        (~rec else:statement/if/else))
+        (~rec else:if/else))
     (format "if ~a ~a~a~a\nend"
             (syntax-e (attribute cond))
             (syntax-e (attribute then))
@@ -96,8 +99,7 @@
    [(for (name:name (~rec from:expr)
                     (~rec to:expr)
                     (~maybe (~rec step:expr)))
-      (~rec stmt:statement) ...
-      (~maybe (~rec ret:return-statement)))
+      (~rec b:block))
     (format "for ~a = ~a, ~a~a do~a\nend"
             (syntax-e (attribute name))
             (syntax-e (attribute from))
@@ -105,15 +107,14 @@
             (if (attribute step)
                 (string-append ", " (syntax-e (attribute step)))
                 "")
-            (indent (format-body (attribute stmt) (attribute ret))))]
+            (indent (format-block (syntax-e (attribute b)))))]
 
    [(for ([name:name (~rec exp:expr)] ...)
-      (~rec stmt:statement) ...
-      (~maybe (~rec ret:return-statement)))
+      (~rec b:block))
     (format "for ~a in ~a do~a\nend"
             (string-join (map (compose symbol->string syntax-e) (attribute name)) ", ")
             (string-join (map syntax-e (attribute exp)) ", ")
-            (indent (format-body (attribute stmt) (attribute ret))))]
+            (indent (format-block (syntax-e (attribute b)))))]
 
    [(~rec stat:statement/function)
     (syntax-e (attribute stat))]
@@ -130,36 +131,33 @@
    [(local (~rec func:statement/function))
     (format "local ~a" (syntax-e (attribute func)))])
 
- (statement/if/then
-   (-> statement/if/then string?)
+ (if/then
+   (-> if/then string?)
 
-   [(then ~cut (~rec stmt:statement) ...
-          (~maybe (~rec ret:return-statement)))
+   [(then ~cut (~rec b:block))
     (format "then~a"
-            (indent (format-body (attribute stmt) (attribute ret))))])
+            (indent (format-block (syntax-e (attribute b)))))])
 
- (statement/if/elseif
-   (-> statement/if/elseif string?)
+ (if/elseif
+   (-> if/elseif string?)
 
-   [(elseif ~cut (~rec exp:expr) (~rec then:statement/if/then))
+   [(elseif ~cut (~rec exp:expr) (~rec then:if/then))
     (format "elseif ~a ~a"
             (syntax-e (attribute exp))
             (syntax-e (attribute then)))])
 
- (statement/if/else
-   (-> statement/if/else string?)
+ (if/else
+   (-> if/else string?)
 
-   [(else ~cut (~rec stmt:statement) ...
-          (~maybe (~rec ret:return-statement)))
+   [(else ~cut (~rec b:block))
     (format "else~a"
-            (indent (format-body (attribute stmt) (attribute ret))))])
+            (indent (format-block (syntax-e (attribute b)))))])
 
  (statement/function
    (-> statement/function string?)
 
    [(function ~cut (name:function-name arg:name ... (~maybe vararg:vararg))
-              (~rec stmt:statement) ...
-              (~maybe (~rec ret:return-statement)))
+              (~rec b:block))
     (format "function ~a(~a)~a\nend"
             (syntax-e (attribute name))
             (string-join (append (map (compose symbol->string syntax-e)
@@ -168,7 +166,7 @@
                                      (list "...")
                                      null))
                          ", ")
-            (indent (format-body (attribute stmt) (attribute ret))))])
+            (indent (format-block (syntax-e (attribute b)))))])
 
  (return-statement
    (-> return-statement string?)
@@ -205,11 +203,10 @@
    [nil
     "nil"]
 
-   [false
-    "false"]
-
-   [true
-    "true"]
+   [b:boolean
+    (case (syntax-e #'b)
+      [(#t) "true"]
+      [(#f) "false"])]
 
    [num:number
     (number->string (syntax-e #'num))]
@@ -250,7 +247,7 @@
    [(~rec var:var)
     (syntax-e (attribute var))]
 
-   [(prefix (~rec exp:expr))
+   [(quote (~rec exp:expr))
     (format "(~a)" (syntax-e (attribute exp)))]
 
    [(~rec call:function-call)
@@ -279,8 +276,7 @@
    (-> function-definition string?)
 
    [(function ~cut (arg:name ... (~maybe vararg:vararg))
-              (~rec stmt:statement) ...
-              (~maybe (~rec ret:return-statement)))
+              (~rec b:block))
     (format "function(~a)~a\nend"
             (string-join (append (map (compose symbol->string syntax-e) (attribute arg))
                                  (if (attribute vararg)
@@ -288,15 +284,7 @@
                                      null))
                          ", ")
             (indent
-              (string-join (append (if (or (pair? (attribute stmt))
-                                           (attribute ret))
-                                       (list "")
-                                       null)
-                                   (map syntax-e (attribute stmt))
-                                   (if (attribute ret)
-                                       (list (syntax-e (attribute ret)))
-                                       null))
-                           "\n")))])
+              (format-block (syntax-e (attribute b)))))])
 
  (table
    (-> table string?)

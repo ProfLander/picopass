@@ -1,6 +1,7 @@
 #lang picopass
 
-(provide (all-defined-out))
+(provide (all-defined-out)
+         (for-syntax (all-defined-out)))
 
 (define reserved-symbols
   (list '=
@@ -65,6 +66,7 @@
 [define-language s-lua
  #:entry-point chunk
  #:terminals [name
+              boolean
               number
               string
               vararg
@@ -72,12 +74,15 @@
 
  ; chunk ::=
  (chunk
-   block)
+  #:datum-literals [#%chunk]
+  (#%chunk block))
 
  ; block ::=
  (block
-   [statement ...
-    (~maybe return-statement)])
+  #:datum-literals [#%block]
+  (#%block
+   statement ...
+   (~maybe return-statement)))
 
  ; stat ::=
  (statement
@@ -99,40 +104,25 @@
    function-call
    label
    (break)
-
    (goto ~cut name)
-
-   ; do - block contents inlined
-   (do ~cut
-       statement ...
-     (~maybe return-statement))
-
-   ; while - block contents inlined
-   (while ~cut expr statement ...
-          (~maybe return-statement))
-
-   ; repeat - block contents inlined
-   (repeat ~cut
-           statement ...
-           (~maybe return-statement)
-           (until ~cut expr))
+   (do ~cut block)
+   (while ~cut expr block)
+   (repeat ~cut block (until ~cut expr))
 
    ; if - subforms handle block inlining
    (if ~cut expr
-       statement/if/then
-       statement/if/elseif
+       if/then
+       if/elseif
        ...
-       statement/if/else)
+       if/else)
 
    ; for name = exp, exp [, exp]
    (for (name expr expr (~maybe expr))
-     statement ...
-     (~maybe return-statement))
+     block)
 
    ; for-in
    (for ([name expr] ...)
-     statement ...
-     (~maybe return-statement))
+     block)
 
    ; function - subform handles block inlining
    statement/function
@@ -144,28 +134,27 @@
    (local statement/function))
 
  ; if subforms
- (statement/if/then
+ (if/then
    #:description "then"
    #:datum-literals [then]
-   (then ~cut statement ... (~maybe return-statement)))
+   (then ~cut block))
 
- (statement/if/elseif
+ (if/elseif
    #:description "elseif"
    #:datum-literals [elseif]
-   (elseif ~cut expr statement/if/then))
+   (elseif ~cut expr if/then))
 
- (statement/if/else
+ (if/else
    #:description "else"
    #:datum-literals [else]
-   (else ~cut statement ... (~maybe return-statement)))
+   (else ~cut block))
 
  ; function subforms
  (statement/function
    #:description "function"
    #:datum-literals [function]
    (function ~cut (function-name name ... (~maybe vararg))
-             statement ...
-             (~maybe return-statement)))
+             block))
 
  ; retstat ::=
  (return-statement
@@ -197,10 +186,9 @@
  ; exp ::=
  (expr
    #:description "expression"
-   #:datum-literals [nil false true]
+   #:datum-literals [nil]
    nil
-   false
-   true
+   boolean
    number
    string
    vararg
@@ -213,10 +201,10 @@
  ; prefixexp ::=
  (prefix-expr
    #:description "prefix expression"
-   #:datum-literals [prefix]
+   #:datum-literals [quote]
    var
-   function-call
-   (prefix expr))
+   (quote expr)
+   function-call)
 
  ; functioncall ::=
  (function-call
@@ -232,8 +220,7 @@
    #:description "function definition"
    #:datum-literals [function]
    (function ~cut (name ... (~maybe vararg))
-             statement ...
-             (~maybe return-statement)))
+             block))
 
  ; funcbody - inlined into parent forms
 
