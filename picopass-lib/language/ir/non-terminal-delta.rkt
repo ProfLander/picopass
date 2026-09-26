@@ -4,7 +4,8 @@
 ;
 ; Holds additions / removals for literals, datum-literals, and productions
 
-(require racket/function
+(require racket/list
+         racket/function
 
          picopass/delta
          picopass/syntax
@@ -47,22 +48,50 @@
       (listof non-terminal?))
   "extend BASE with the removals and additions in DELTA"
 
-  (filter (λ (non-terminal)
-            (pair? (non-terminal-productions non-terminal)))
+  (let* ([idents
+          (remove-duplicates (append (map non-terminal-ident
+                                          base)
+                                     (map non-terminal-delta-ident/name
+                                          delta))
+                             datum=?)]
 
-          (for/list ([ext (in-list delta)])
-            (let* ([ident/name (non-terminal-delta-ident/name ext)]
-                   [description (non-terminal-delta-description ext)]
-                   [target (or (findf (compose (curry datum=? ident/name)
-                                               non-terminal-ident)
-                                      base)
-                               (non-terminal ext
-                                             ident/name
-                                             description
-                                             null
-                                             null
-                                             null))])
-              (extend-non-terminal target ext)))))
+         [non-terminals
+          (for/list ([ident (in-list idents)])
+
+            (let* ([base
+                    (findf (λ (cand)
+                             (datum=?
+                              ident
+                              (non-terminal-ident cand)))
+                           base)]
+
+                   [ext
+                    (findf (λ (cand)
+                             (datum=?
+                              ident
+                              (non-terminal-delta-ident/name cand)))
+                           delta)])
+
+              (cond
+                [(and base ext)
+                 (extend-non-terminal base ext)]
+
+                [(and (not base) ext)
+                 (extend-non-terminal
+                  (non-terminal (non-terminal-delta-stx ext)
+                                ident
+                                (non-terminal-delta-description ext)
+                                null
+                                null
+                                null)
+                  ext)]
+
+                [(and base (not ext))
+                 base])))])
+
+    (filter (λ (non-terminal)
+              (pair? (non-terminal-productions non-terminal)))
+            non-terminals)))
 
 (define (extend-non-terminal base delta)
   (-> non-terminal? non-terminal-delta? non-terminal?)
