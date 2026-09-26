@@ -31,10 +31,12 @@
 (define (raise-language-entry-point-error lang entry-point)
   (-> language? syntax? none/c)
 
-  [raise-language-error lang
-   "entry-point is not a valid non-terminal"
+  (raise-language-error
+   lang
+   (format "entry-point `~a` is not a valid non-terminal"
+           (syntax-e entry-point))
    #f
-   (list entry-point)])
+   (list entry-point)))
 
 (define (raise-language-duplicate-symbol-error lang duplicate)
   (-> language? syntax? none/c)
