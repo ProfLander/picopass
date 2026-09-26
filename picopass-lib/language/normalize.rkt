@@ -19,7 +19,6 @@
   "normalize SELF into compilable form"
 
   (let* ([stx (language-stx self)]
-         [scope (language-scope self)]
          [ident (language-ident self)]
          [entry-point-ident (language-entry-point-ident self)]
          [description (language-description self)]
