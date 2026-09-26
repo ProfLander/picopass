@@ -413,7 +413,8 @@
                                             (p-list lctx
                                                     (list (p-literal #'~and)
                                                           (p-ident #'tmp)
-                                                          (car clause))))
+                                                          (car clause))
+                                                    #f))
                                       #f)
                               #'(~? tmp))))]
                  [_ (let ([clause (non-terminal-pattern->clause pass pattern)])
