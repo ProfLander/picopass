@@ -30,12 +30,17 @@
 
 (define (gather-binding-classes define-language-spec stx)
   (syntax-parse stx
-    #:datum-literals [binding-class]
+    #:datum-literals [binding-class extension-class]
 
     [(binding-class name:id option ...)
      (binding-class->define-language-spec define-language-spec
                                           #'name
                                           #'(option ...))]
+
+    [(extension-class name:id option ...)
+     (extension-class->define-language-spec define-language-spec
+                                            #'name
+                                            #'(option ...))]
 
     [_ (void)]))
 
@@ -76,6 +81,17 @@
                                           #'(production ...)))]
 
     [_ (void)]))
+
+(define (extension-class->define-language-spec define-language-spec
+                                               name
+                                               options)
+  (syntax-parse options
+    [((~alt (~optional (~seq #:description _))
+            (~optional (~seq #:binding-space _)))
+      ...)
+     (define-language-spec-add-terminal! define-language-spec
+       name
+       #'id)]))
 
 (define (binding-class->define-language-spec define-language-spec
                                              name
