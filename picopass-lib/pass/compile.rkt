@@ -173,21 +173,29 @@
     (if (language? pass-input)
 
         (let* ([handler-input (input-handler-ident handler)]
-               [non-terminal (language-non-terminal pass-input handler-input)])
+               [non-terminal (language-non-terminal pass-input
+                                                    handler-input)])
 
-          (let* ([productions (for*/list ([processor (in-list (input-handler-processors handler))]
-                                          [clause (in-list (processor-clauses processor))])
-                                (processor-clause-pattern->non-terminal-pattern
-                                  (processor-clause-pattern clause)))]
+          (let* ([productions
+                  (for*/list ([processor
+                               (in-list (input-handler-processors
+                                         handler))]
+                              [clause
+                               (in-list (processor-clauses processor))])
+
+                    (processor-clause-pattern->non-terminal-pattern
+                     (processor-clause-pattern clause)))]
 
                  [undefined
-                  (for/list ([prod (in-list (non-terminal-productions non-terminal))]
+                  (for/list ([prod (in-list (non-terminal-productions
+                                             non-terminal))]
                              #:unless (member prod productions pattern=?))
                     prod)]
 
                  [clauses
                   (for/list ([pattern (in-list undefined)])
-                    (let* ([clause (non-terminal-pattern->clause pass pattern)]
+                    (let* ([clause (non-terminal-pattern->clause pass
+                                                                 pattern)]
                            [pat (car clause)]
                            [body (cdr clause)])
                       (with-syntax ([body body])
@@ -206,7 +214,8 @@
                                        clauses)]
 
                  [handler (input-handler handler-input
-                                         (append (input-handler-processors handler)
+                                         (append (input-handler-processors
+                                                  handler)
                                                  (list processor)))])
 
             handler))
@@ -353,7 +362,10 @@
        [[clause-body ...] clause-body]
        [output
         (if (language? pass-output)
-            (language-introduce pass-output processor-output)
+            (language-introduce pass-output
+                                (replace-context
+                                 (language-context pass-output)
+                                 processor-output))
             processor-output)]
        [clause-tail
         (cond
@@ -521,9 +533,10 @@
                   [temp-ident
                    (format-id #'pat "~a" (generate-temporary #'ident))]
 
-                  [class/language [language-introduce lang
-                                   [replace-context (language-context lang)
-                                    class]]]
+                  [class/language
+                   (language-introduce
+                    lang
+                    (replace-context (language-context lang) class))]
 
                   [class/pass [pass-introduce pass class]])
 
