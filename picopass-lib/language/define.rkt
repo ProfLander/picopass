@@ -57,7 +57,8 @@
   (let ([base [syntax-local-language #'delta.extends
                (thunk
                  [raise-syntax-error 'define-language
-                  (format "unbound language ~a" (syntax-e #'delta.extends))
+                                     (format "unbound language ~a"
+                                             (syntax-e #'delta.extends))
                   #'delta.extends])]])
 
     (let* ([delta (attribute delta.struct)]

@@ -39,6 +39,7 @@
   (let* ([entry-point (language-entry-point-ident language)]
          [non-terminal-idents (map non-terminal-ident
                                    (language-non-terminals language))])
+
     (unless (member entry-point non-terminal-idents datum=?)
       (raise-language-entry-point-error language entry-point)))
 

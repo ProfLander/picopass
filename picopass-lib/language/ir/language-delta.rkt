@@ -33,17 +33,21 @@
 
   #:methods gen:custom-write
   [(%define (write-proc self port _mode)
-            (display (list 'language-delta
-                           (list 'name (syntax->datum (language-delta-ident self)))
-                           (list 'entry-point
-                                 (let ([entry-point
-                                        (language-delta-entry-point-ident self)])
-                                   (and entry-point
-                                        (syntax->datum entry-point))))
-                           (cons 'description (language-delta-description self))
-                           (cons 'delta-terminals (language-delta-delta-terminals self))
-                           (cons 'non-terminals (language-delta-non-terminals self)))
-                     port))])
+            (display
+             (list 'language-delta
+                   (list 'name
+                         (syntax->datum (language-delta-ident self)))
+                   (list 'entry-point
+                         (let ([entry-point
+                                (language-delta-entry-point-ident self)])
+                           (and entry-point
+                                (syntax->datum entry-point))))
+                   (cons 'description (language-delta-description self))
+                   (cons 'delta-terminals
+                         (language-delta-delta-terminals self))
+                   (cons 'non-terminals
+                         (language-delta-non-terminals self)))
+             port))])
 
 (define (language-delta-name self)
   (-> language-delta? symbol?)

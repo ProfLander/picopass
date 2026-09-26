@@ -192,8 +192,9 @@
 
     (when (language? pass-output)
 
-      (let ([output (language-non-terminal pass-output
-                                           (processor-output-ident processor))])
+      (let ([output
+             (language-non-terminal pass-output
+                                    (processor-output-ident processor))])
 
         (unless output
           [raise-processor-error processor
