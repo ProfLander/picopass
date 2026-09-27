@@ -8,7 +8,10 @@
 (require syntax/parse
 
          picopass/syntax
-         picopass/language/derive/define-language-spec)
+         picopass/language/derive/define-language-spec
+
+         syntax/parse
+         (for-template syntax/parse))
 
 (provide (all-defined-out))
 
