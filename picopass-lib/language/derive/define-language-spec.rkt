@@ -5,7 +5,8 @@
 ; Provides an IR for constructing derived define-language forms
 
 (require picopass/syntax 
-         picopass/language/define)
+         picopass/language/define
+         (for-template picopass/language/define))
 
 (provide (all-defined-out))
 
@@ -73,11 +74,11 @@
                   [(non-terminal ...)
                    (map non-terminal-spec->syntax non-terminals)])
 
-      #'[define-language name
-         #:entry-point entry-point
-         description ...
-         #:terminals [terminal ...]
-         non-terminal ...])))
+      #'(define-language name
+          #:entry-point entry-point
+          description ...
+          #:terminals [terminal ...]
+          non-terminal ...))))
 
 (struct terminal-spec [name class]
   #:transparent)
